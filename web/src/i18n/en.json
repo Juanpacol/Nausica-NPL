@@ -1,0 +1,62 @@
+{
+  "nav": {
+    "home": "Home",
+    "analyze": "Analyze",
+    "reframe": "Reframe",
+    "themeLight": "Light mode",
+    "themeDark": "Dark mode"
+  },
+  "landing": {
+    "title": "Nausica",
+    "tagline": "Beyond binary diagnosis",
+    "pitch": "We detect cognitive distortions in language, condense them into a continuous Cognitive Flexibility Index (CFI), and guide a Socratic reframing dialogue whose success is measured by the CFI trajectory, turn by turn.",
+    "cta": "Analyze a text",
+    "ctaSecondary": "Start reframing",
+    "how": {
+      "title": "How it works",
+      "step1Title": "1 · Detection",
+      "step1": "A multi-label classifier (MentalRoBERTa) detects 5 cognitive distortion types from the CBT taxonomy.",
+      "step2Title": "2 · Measurement",
+      "step2": "Probabilities aggregate into the CFI: a continuous cognitive-rigidity scalar between 0 and 1 — not a diagnostic label.",
+      "step3Title": "3 · Reframing",
+      "step3": "A CBT-based Socratic dialogue invites evidence examination. CFI declining turn by turn is the progress signal."
+    }
+  },
+  "distortions": {
+    "all_or_nothing": "All-or-nothing",
+    "overgeneralization": "Overgeneralization",
+    "emotional_reasoning": "Emotional reasoning",
+    "catastrophizing": "Catastrophizing",
+    "mind_reading": "Mind reading"
+  },
+  "analyze": {
+    "title": "Distortion analysis",
+    "subtitle": "Write a thought or text (in English — the models were trained on English corpora) and see its cognitive profile.",
+    "placeholder": "e.g. I always ruin everything. Nobody will ever love me…",
+    "button": "Analyze",
+    "analyzing": "Analyzing…",
+    "resultsTitle": "Distortion profile",
+    "cfiTitle": "Cognitive Flexibility Index",
+    "cfiRigid": "rigid",
+    "cfiFlexible": "flexible",
+    "empty": "The profile will appear here after analyzing."
+  },
+  "reframe": {
+    "title": "Reframing dialogue",
+    "subtitle": "CBT-based Socratic conversation. The chart shows your live CFI trajectory.",
+    "placeholder": "Write what you're thinking (in English)…",
+    "send": "Send",
+    "sending": "Thinking…",
+    "trajectoryTitle": "CFI trajectory",
+    "trajectoryHint": "Lower = more flexible",
+    "turn": "Turn",
+    "newSession": "New session",
+    "emptyChat": "Share a thought to begin the dialogue.",
+    "flexibleZone": "flexible zone"
+  },
+  "common": {
+    "disclaimer": "Research prototype — not a medical device or a diagnosis. If you are in crisis, seek immediate professional help.",
+    "error": "Could not reach the analysis server. Check that the API is running.",
+    "loading": "Loading…"
+  }
+}

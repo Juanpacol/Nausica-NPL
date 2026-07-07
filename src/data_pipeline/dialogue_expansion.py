@@ -35,8 +35,8 @@ downward arrow) — never lectures, never gives direct advice in the first turns
 shows a small but genuine shift (more nuance, less absolutism) — realistic, not miraculous.
 - Natural conversational English. No stage directions, no numbered lists inside turns.
 
-Respond ONLY with a JSON array of turn objects:
-[{{"role": "client", "text": "..."}}, {{"role": "counselor", "text": "..."}}, ...]"""
+Respond ONLY with a JSON object of this exact shape:
+{{"turns": [{{"role": "client", "text": "..."}}, {{"role": "counselor", "text": "..."}}, ...]}}"""
 
 
 def expand_pair(client: LLMClient, question: str, answer: str,
@@ -46,9 +46,11 @@ def expand_pair(client: LLMClient, question: str, answer: str,
         f"Original client question:\n{question}\n\n"
         f"Original counselor answer (use as grounding for the counselor's approach):\n{answer}"
     )
-    turns = client.complete_json(prompt, system=system)
+    raw = client.complete_json(prompt, system=system)
+    turns = raw.get("turns") if isinstance(raw, dict) else raw
     if not isinstance(turns, list) or len(turns) < min_turns:
-        raise ValueError(f"Bad expansion: {len(turns) if isinstance(turns, list) else type(turns)} turns")
+        n = len(turns) if isinstance(turns, list) else type(raw)
+        raise ValueError(f"Bad expansion: {n} turns")
     for t in turns:
         if t.get("role") not in ("client", "counselor") or not t.get("text"):
             raise ValueError(f"Malformed turn: {t}")
@@ -67,7 +69,7 @@ def run(limit: int | None = None) -> None:
         ds = ds.select(range(min(limit, len(ds))))
     logger.info("Expanding %d single-turn pairs into multi-turn dialogues", len(ds))
 
-    llm = LLMClient(model=exp_cfg["model"], max_tokens=2048)
+    llm = LLMClient(model=exp_cfg["model"], max_tokens=4096)
     written = 0
     with open(out_path, "w") as out:
         for i, row in enumerate(ds):

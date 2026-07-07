@@ -1,0 +1,65 @@
+.nausica-gradient {
+  background: var(--color-bg);
+}
+
+.nausica-gradient-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  opacity: 0.35;
+  will-change: transform;
+}
+
+.nausica-gradient-a {
+  width: 55vw;
+  height: 55vw;
+  left: -12vw;
+  top: -18vw;
+  background: radial-gradient(circle, #34406b 0%, transparent 70%);
+  animation: drift-a 26s ease-in-out infinite alternate;
+}
+
+.nausica-gradient-b {
+  width: 45vw;
+  height: 45vw;
+  right: -10vw;
+  top: 5vh;
+  background: radial-gradient(circle, #2f8f83 0%, transparent 70%);
+  animation: drift-b 32s ease-in-out infinite alternate;
+}
+
+.nausica-gradient-c {
+  width: 35vw;
+  height: 35vw;
+  left: 30vw;
+  bottom: -20vh;
+  background: radial-gradient(circle, #e8927c 0%, transparent 70%);
+  opacity: 0.18;
+  animation: drift-c 38s ease-in-out infinite alternate;
+}
+
+:root[data-theme='dark'] .nausica-gradient-blob {
+  opacity: 0.28;
+}
+
+:root[data-theme='dark'] .nausica-gradient-c {
+  opacity: 0.1;
+}
+
+@keyframes drift-a {
+  to {
+    transform: translate(8vw, 6vh) scale(1.15);
+  }
+}
+
+@keyframes drift-b {
+  to {
+    transform: translate(-6vw, 10vh) scale(0.9);
+  }
+}
+
+@keyframes drift-c {
+  to {
+    transform: translate(-10vw, -8vh) scale(1.2);
+  }
+}

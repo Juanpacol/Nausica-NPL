@@ -31,15 +31,21 @@ cfi_weights:
   emotional_reasoning: 0.15
   mind_reading: 0.15
 
+# LLM provider for weak labeling / dialogue expansion / judge.
+# "ollama" = local + free (default, no data leaves the machine).
+# "anthropic" = Claude API (higher quality, needs ANTHROPIC_API_KEY).
+llm:
+  provider: ollama
+
 weak_labeling:
-  model: claude-sonnet-5
+  model: qwen3:8b
   # Labels below this confidence are dropped to reduce noise
   confidence_threshold: 0.6
   # Fraction of labeled examples reserved for the manual spot-check
   spot_check_fraction: 0.10
 
 dialogue_expansion:
-  model: claude-sonnet-5
+  model: qwen3:8b
   min_turns: 5
   max_turns: 7
 

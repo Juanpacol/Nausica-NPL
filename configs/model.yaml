@@ -18,3 +18,26 @@ training:
 # Multi-label: sigmoid + BCEWithLogits, threshold applied at inference
 inference:
   decision_threshold: 0.5
+
+# Temporal CFI Transformer (Phase 2) — predicts next-turn distortion vector from
+# the turn history. Deliberately small: trained on ~60 synthetic dialogues.
+temporal_transformer:
+  d_model: 32
+  n_heads: 4
+  n_layers: 2
+  dropout: 0.1
+  learning_rate: 1.0e-3
+  epochs: 200
+  val_fraction: 0.2          # session-level split, never mid-dialogue
+  seed: 42
+  checkpoint: results/temporal_cfi/model.pt
+
+# Contrastive rigidity embedding (Phase 2) — MiniLM fine-tuned on (rigid, flexible)
+# pairs; rigidity_score = projection onto the rigid-flexible centroid axis.
+contrastive_embedding:
+  base_model: sentence-transformers/all-MiniLM-L6-v2
+  epochs: 3
+  batch_size: 16
+  val_fraction: 0.2
+  seed: 42
+  output_dir: results/rigidity_embedding

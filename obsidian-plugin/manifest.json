@@ -1,0 +1,9 @@
+{
+  "id": "nausica-cognitive-map",
+  "name": "Nausica Cognitive Map",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "Cognitive distortion analysis and a Cognitive Flexibility Index (CFI) map for your journal notes, powered by the Nausica backend. Research prototype — not a diagnosis or medical device.",
+  "author": "Juan Pablo Botero",
+  "isDesktopOnly": true
+}

@@ -1,0 +1,103 @@
+@import 'tailwindcss';
+
+/* ---------------------------------------------------------------------------
+   Nausica design tokens — Palette A "Calm Clinical"
+   Research lineage: Calm (deep-blue credibility) + Ginger (clinical-warm).
+   Distortion categoricals are calm/non-alarming and are ALWAYS paired with
+   icons + labels in the UI (never color alone).
+--------------------------------------------------------------------------- */
+
+:root {
+  /* Brand */
+  --color-primary: #34406b;
+  --color-secondary: #2f8f83;
+  --color-accent: #e8927c; /* CTAs only */
+
+  /* Surfaces (light) */
+  --color-bg: #f7f8fc;
+  --color-surface: #ffffff;
+  --color-surface-2: #eef0f8;
+  --color-border: #dde1ee;
+  --color-text: #1f2937;
+  --color-text-muted: #5b6478;
+
+  /* Distortion categoricals — validated (dataviz six checks, light surface) */
+  --color-cat-all-or-nothing: #4c77c9;
+  --color-cat-overgeneralization: #0a9187;
+  --color-cat-emotional-reasoning: #ae6e1f;
+  --color-cat-catastrophizing: #8e66cc;
+  --color-cat-mind-reading: #c25573;
+
+  /* CFI single-hue teal ramp: dark = rigid -> light = flexible (validated ordinal) */
+  --color-cfi-1: #123f3b;
+  --color-cfi-2: #16554f;
+  --color-cfi-3: #1a6c64;
+  --color-cfi-4: #248579;
+  --color-cfi-5: #379e8f;
+
+  --shadow-card: 0 1px 3px rgb(31 41 55 / 0.06), 0 8px 24px rgb(31 41 55 / 0.05);
+  --radius-card: 1rem;
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --color-bg: #0f1526;
+  --color-surface: #1a2238;
+  --color-surface-2: #232d49;
+  --color-border: #2e3a5c;
+  --color-text: #e7ebf4;
+  --color-text-muted: #9aa5c0;
+
+  --color-primary: #8fa2d9; /* lightened for contrast on dark surfaces */
+  --color-secondary: #4db3a5;
+  --color-accent: #ef9f8a;
+
+  /* Distortion categoricals — validated against dark surface #1A2238 */
+  --color-cat-all-or-nothing: #4e7fd6;
+  --color-cat-overgeneralization: #12a398;
+  --color-cat-emotional-reasoning: #b5821f;
+  --color-cat-catastrophizing: #9678db;
+  --color-cat-mind-reading: #d06080;
+
+  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.3);
+
+  color-scheme: dark;
+}
+
+/* Expose tokens as Tailwind v4 theme colors (usable as bg-brand, text-ink, etc.) */
+@theme inline {
+  --color-brand: var(--color-primary);
+  --color-brand-2: var(--color-secondary);
+  --color-cta: var(--color-accent);
+  --color-canvas: var(--color-bg);
+  --color-card: var(--color-surface);
+  --color-card-2: var(--color-surface-2);
+  --color-edge: var(--color-border);
+  --color-ink: var(--color-text);
+  --color-ink-muted: var(--color-text-muted);
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family:
+    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 400ms ease;
+}
+
+/* Slow, gentle transitions per mental-health design research */
+button,
+a {
+  transition: all 250ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

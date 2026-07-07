@@ -21,7 +21,7 @@ from src.utils.logging_config import get_logger
 
 logger = get_logger(__name__)
 
-JUDGE_MODEL = "claude-sonnet-5"
+JUDGE_MODEL = "qwen3:8b"  # local via Ollama; switch provider in configs/data.yaml
 
 RUBRIC_SYSTEM = """You are an expert evaluator of CBT counseling dialogues. Score the \
 counselor's performance in the dialogue on three criteria, each an integer 1-5:

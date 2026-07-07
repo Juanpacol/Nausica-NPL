@@ -22,7 +22,12 @@ Nausica instead:
 python3.11 -m venv venv && source venv/bin/activate
 pip install -e ".[dev]"            # core + tests
 pip install -e ".[clustering]"     # optional: BERTopic mindset profiler
-cp .env.example .env               # then fill in ANTHROPIC_API_KEY (+ HF_TOKEN)
+cp .env.example .env
+
+# LLM provider — default is 100% local and free (no mental-health text leaves
+# your machine): install Ollama, pull the model, start the server:
+brew install ollama && ollama pull qwen3:8b && ollama serve
+# (optional alternative: set NAUSICA_LLM_PROVIDER=anthropic + ANTHROPIC_API_KEY)
 ```
 
 `HF_TOKEN` is needed for the gated `mental/mental-roberta-base` encoder

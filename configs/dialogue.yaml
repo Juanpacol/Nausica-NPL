@@ -6,7 +6,7 @@
 backend: prompt
 
 prompt_backend:
-  model: claude-sonnet-5
+  model: qwen3:8b   # served locally by Ollama (see configs/data.yaml llm.provider)
   max_tokens: 400
   # Socratic style knobs
   max_questions_per_turn: 1

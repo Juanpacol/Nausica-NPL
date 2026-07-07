@@ -1,0 +1,62 @@
+{
+  "nav": {
+    "home": "Inicio",
+    "analyze": "Analizar",
+    "reframe": "Reencuadre",
+    "themeLight": "Modo claro",
+    "themeDark": "Modo oscuro"
+  },
+  "landing": {
+    "title": "Nausica",
+    "tagline": "Más allá del diagnóstico binario",
+    "pitch": "Detectamos distorsiones cognitivas en el lenguaje, las condensamos en un Índice de Flexibilidad Cognitiva (CFI) continuo, y acompañamos un diálogo socrático de reencuadre cuyo éxito se mide por la trayectoria del CFI, turno a turno.",
+    "cta": "Analizar un texto",
+    "ctaSecondary": "Iniciar reencuadre",
+    "how": {
+      "title": "Cómo funciona",
+      "step1Title": "1 · Detección",
+      "step1": "Un clasificador multi-etiqueta (MentalRoBERTa) detecta 5 tipos de distorsión cognitiva de la taxonomía TCC.",
+      "step2Title": "2 · Medición",
+      "step2": "Las probabilidades se agregan en el CFI: un escalar continuo de rigidez cognitiva entre 0 y 1 — no una etiqueta diagnóstica.",
+      "step3Title": "3 · Reencuadre",
+      "step3": "Un diálogo socrático basado en TCC invita a examinar la evidencia. El CFI descendiendo turno a turno es la señal de progreso."
+    }
+  },
+  "distortions": {
+    "all_or_nothing": "Todo o nada",
+    "overgeneralization": "Sobregeneralización",
+    "emotional_reasoning": "Razonamiento emocional",
+    "catastrophizing": "Catastrofismo",
+    "mind_reading": "Lectura de mente"
+  },
+  "analyze": {
+    "title": "Análisis de distorsiones",
+    "subtitle": "Escribe un pensamiento o texto (en inglés — los modelos fueron entrenados en corpus en inglés) y observa su perfil cognitivo.",
+    "placeholder": "e.g. I always ruin everything. Nobody will ever love me…",
+    "button": "Analizar",
+    "analyzing": "Analizando…",
+    "resultsTitle": "Perfil de distorsiones",
+    "cfiTitle": "Índice de Flexibilidad Cognitiva",
+    "cfiRigid": "rígido",
+    "cfiFlexible": "flexible",
+    "empty": "El perfil aparecerá aquí después de analizar."
+  },
+  "reframe": {
+    "title": "Diálogo de reencuadre",
+    "subtitle": "Conversación socrática basada en TCC. La gráfica muestra tu trayectoria de CFI en vivo.",
+    "placeholder": "Escribe lo que estás pensando (en inglés)…",
+    "send": "Enviar",
+    "sending": "Pensando…",
+    "trajectoryTitle": "Trayectoria del CFI",
+    "trajectoryHint": "Más bajo = más flexible",
+    "turn": "Turno",
+    "newSession": "Nueva sesión",
+    "emptyChat": "Comparte un pensamiento para comenzar el diálogo.",
+    "flexibleZone": "zona flexible"
+  },
+  "common": {
+    "disclaimer": "Prototipo de investigación — no es un dispositivo médico ni un diagnóstico. Si estás en crisis, busca ayuda profesional inmediata.",
+    "error": "No se pudo conectar con el servidor de análisis. Verifica que la API esté corriendo.",
+    "loading": "Cargando…"
+  }
+}

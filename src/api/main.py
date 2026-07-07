@@ -15,6 +15,7 @@ import uuid
 from functools import lru_cache
 
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from src.metrics.cognitive_flexibility_index import ReframingTrajectory, compute_cfi
@@ -27,6 +28,13 @@ app = FastAPI(
     description="Cognitive distortion analysis + Socratic reframing with CFI trajectory. "
     "Research prototype — not a medical device, outputs are not diagnoses.",
     version="0.1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],  # Vite dev server
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
 )
 
 # ------------------------------------------------------------------ state
@@ -113,6 +121,79 @@ def trajectory(session_id: str):
     if session is None:
         raise HTTPException(status_code=404, detail="Unknown session_id")
     return session["trajectory"].to_dict()
+
+
+# --------------------------------------------------- Phase 2: temporal dynamics
+
+
+@lru_cache(maxsize=1)
+def _temporal_model():
+    from src.models.temporal_cfi import TemporalCFITransformer
+
+    return TemporalCFITransformer.load()
+
+
+class PredictTrajectoryRequest(BaseModel):
+    history: list[dict[str, float]] = Field(min_length=1)
+
+
+class PredictTrajectoryResponse(BaseModel):
+    predicted_distortions: dict[str, float]
+    predicted_cfi: float
+    disclaimer: str = (
+        "Research prototype output — not a clinical diagnosis. "
+        "Temporal model trained on synthetic dialogue trajectories."
+    )
+
+
+@app.post("/predict_trajectory", response_model=PredictTrajectoryResponse)
+def predict_trajectory(req: PredictTrajectoryRequest):
+    try:
+        model = _temporal_model()
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=503,
+            detail="Temporal model not trained yet — run: python -m src.models.temporal_cfi train",
+        )
+    pred = model.predict_next(req.history)
+    return PredictTrajectoryResponse(
+        predicted_distortions=pred, predicted_cfi=compute_cfi(pred)
+    )
+
+
+# ------------------------------------------------- Phase 2: rigidity embedding
+
+
+@lru_cache(maxsize=1)
+def _rigidity_embedder():
+    from src.models.rigidity_embedding import RigidityEmbedder
+
+    return RigidityEmbedder.load()
+
+
+class RigidityScoreRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=8000)
+
+
+class RigidityScoreResponse(BaseModel):
+    rigidity_score: float
+    disclaimer: str = (
+        "Research prototype output — not a clinical diagnosis. "
+        "Embedding trained on synthetic (rigid, flexible) reformulation pairs."
+    )
+
+
+@app.post("/rigidity_score", response_model=RigidityScoreResponse)
+def rigidity_score(req: RigidityScoreRequest):
+    try:
+        embedder = _rigidity_embedder()
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=503,
+            detail="Rigidity embedding not trained yet — "
+            "run: python -m src.models.rigidity_embedding train",
+        )
+    return RigidityScoreResponse(rigidity_score=embedder.rigidity_score(req.text))
 
 
 @app.get("/health")

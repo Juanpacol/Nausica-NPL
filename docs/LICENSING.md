@@ -14,7 +14,8 @@ Update this table before adding any new external asset.
 | Counseling conversations (`Amod/mental_health_counseling_conversations`) | Dataset (single-turn Q&A, therapist–client) | HuggingFace Hub | Research use | Seed data for SMILE-style multi-turn expansion. |
 | `transformers`, `datasets`, `torch`, `fastapi`, etc. | Libraries | PyPI | Apache-2.0 / BSD / MIT | No constraint. |
 | `bertopic` | Library (optional extra) | PyPI | MIT | No constraint. |
-| Anthropic API (Claude) | Weak labeling, dialogue expansion, PromptBackend, LLM-judge | api.anthropic.com | Commercial ToS | Mental-health texts are sent to the API — document in ethics section. No PII should be present (datasets are already public/anonymized). |
+| Ollama + `qwen3:8b` | Default LLM provider: weak labeling, dialogue expansion, PromptBackend, LLM-judge | Local (ollama.com) | Ollama MIT; Qwen3 Apache-2.0 | **Runs 100% locally — no mental-health text ever leaves the machine.** This is the default provider (configs/data.yaml `llm.provider`). |
+| Anthropic API (Claude) | Optional higher-quality LLM provider (switch `llm.provider: anthropic`) | api.anthropic.com | Commercial ToS | Mental-health texts are sent to the API — document in ethics section if used. No PII should be present (datasets are already public/anonymized). |
 
 ## Methodology-only references (cited in paper, no code/data reuse)
 

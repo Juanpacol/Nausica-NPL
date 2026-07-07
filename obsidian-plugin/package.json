@@ -1,0 +1,20 @@
+{
+  "name": "nausica-cognitive-map",
+  "version": "0.1.0",
+  "description": "Obsidian plugin for the Nausica cognitive distortion research prototype (not a diagnosis).",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+    "test": "node smoke.mjs"
+  },
+  "keywords": ["obsidian", "nausica", "cbt", "research"],
+  "author": "Juan Pablo Botero",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "esbuild": "~0.25.0",
+    "obsidian": "latest",
+    "typescript": "^5.0.0"
+  }
+}
