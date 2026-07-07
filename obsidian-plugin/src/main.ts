@@ -1,5 +1,5 @@
 import { MarkdownView, Notice, Plugin, TFile, WorkspaceLeaf } from 'obsidian';
-import { analyzeText } from './api';
+import { analyzeText, sha256Hex } from './api';
 import { renderInlineCard } from './InlineCard';
 import { RigidityMapView, VIEW_TYPE_RIGIDITY_MAP } from './RigidityMapView';
 import { DEFAULT_SETTINGS, NausicaSettings, NausicaSettingsTab } from './SettingsTab';
@@ -99,7 +99,8 @@ export default class NausicaPlugin extends Plugin {
 
   private async analyzeFile(file: TFile): Promise<NoteAnalysis> {
     const text = await this.app.vault.cachedRead(file);
-    const response = await analyzeText(this.settings.backendUrl, text);
+    const fileHash = await sha256Hex(text);
+    const response = await analyzeText(this.settings.backendUrl, text, this.settings.authToken, fileHash);
     const analysis: NoteAnalysis = {
       distortions: response.distortions,
       cfi: response.cfi,
@@ -111,6 +112,10 @@ export default class NausicaPlugin extends Plugin {
   }
 
   private async analyzeActiveNote(): Promise<void> {
+    if (!this.settings.authToken) {
+      new Notice('Nausica: log in first — Settings → Nausica Cognitive Map.');
+      return;
+    }
     const file = this.app.workspace.getActiveFile();
     if (!file || file.extension !== 'md') {
       new Notice('Nausica: open a Markdown note first.');
@@ -128,6 +133,10 @@ export default class NausicaPlugin extends Plugin {
   }
 
   private async analyzeAllNotes(): Promise<void> {
+    if (!this.settings.authToken) {
+      new Notice('Nausica: log in first — Settings → Nausica Cognitive Map.');
+      return;
+    }
     const files = this.app.vault.getMarkdownFiles();
     if (files.length === 0) {
       new Notice('Nausica: no Markdown notes in this vault.');
@@ -172,6 +181,7 @@ export default class NausicaPlugin extends Plugin {
       return;
     }
     if (!this.settings.autoAnalyzeOnOpen) return;
+    if (!this.settings.authToken) return; // quiet skip — cached cards above still render
     try {
       const analysis = await this.analyzeFile(file);
       // Only inject if the same file is still active.

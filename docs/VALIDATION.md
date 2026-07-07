@@ -52,6 +52,19 @@ Qualitative sanity check (live API, texts never seen in training):
 The embedding separates rigid from flexible framings on unseen inputs in the
 expected direction.
 
+## 2b. Composite Rigidity Score (Phase 4 — heuristic, NOT calibrated)
+
+`src/metrics/composite_rigidity.py` blends the three signals with weights from
+configs/model.yaml (0.5 classifier CFI / 0.25 temporal / 0.25 embedding). These
+weights are a HEURISTIC starting point — there is no real outcome data to
+calibrate them against yet. The `signal_spread` field reports max−min across
+signals so disagreement is visible rather than averaged away. Recalibrate by
+regression once real longitudinal data exists.
+
+Live e2e check (2026-07-07): all three signals active, composite 0.43 on a
+rigid probe text with spread 0.30 — the spread being large is expected while the
+classifier head is untrained.
+
 ## 3. What must happen before these numbers are paper-ready
 
 1. Fine-tune the distortion classifier (Phase 1 weak labeling at scale) — unblocks

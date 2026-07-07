@@ -19,7 +19,7 @@ await esbuild.build({
   logLevel: 'silent',
 });
 
-const { AnalysisStore, cfiHex, cfiLabelText, CFI_RAMP_HEX } = await import(
+const { AnalysisStore, cfiHex, cfiLabelText, CFI_RAMP_HEX, sha256Hex } = await import(
   pathToFileURL(outfile).href
 );
 
@@ -101,6 +101,18 @@ const mkAnalysis = (cfi) => ({
   assert.equal(cfiLabelText(0.8), 'rigid');
   assert.equal(cfiLabelText(0.35), 'moderate'); // boundary: <0.35 is flexible
   assert.equal(cfiLabelText(0.6), 'rigid'); // boundary: <0.6 is moderate
+}
+
+// --- sha256Hex (known vectors) ---------------------------------------------------
+{
+  assert.equal(
+    await sha256Hex('abc'),
+    'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
+  );
+  assert.equal(
+    await sha256Hex(''),
+    'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+  );
 }
 
 console.log('SMOKE OK');

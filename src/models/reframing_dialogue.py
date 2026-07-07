@@ -46,10 +46,14 @@ class ReframingBackend(ABC):
         distortion_profile: dict[str, float],
         user_text: str,
         history: list[dict[str, str]],
+        exemplars: list[dict] | None = None,
     ) -> str:
         """Produce the counselor's next turn.
 
         history: [{"role": "client"|"counselor", "text": ...}, ...] (oldest first)
+        exemplars: optional RAG few-shots — past exchanges of THIS client where a
+        reply measurably lowered CFI (src/models/rag_retrieval.py). May be ignored
+        by backends that don't support them.
         """
 
 
@@ -61,12 +65,21 @@ class PromptBackend(ReframingBackend):
         self._client = LLMClient(model=cfg["model"], max_tokens=cfg["max_tokens"])
         self._max_questions = cfg["max_questions_per_turn"]
 
-    def generate(self, distortion_profile, user_text, history) -> str:
+    def generate(self, distortion_profile, user_text, history, exemplars=None) -> str:
         profile_str = ", ".join(f"{k}={v:.2f}" for k, v in sorted(
             distortion_profile.items(), key=lambda kv: -kv[1]))
         system = SOCRATIC_SYSTEM_PROMPT.format(
             distortion_profile=profile_str, max_questions=self._max_questions
         )
+        if exemplars:
+            shots = "\n\n".join(
+                f"[client]: {e['client_text']}\n[counselor]: {e['counselor_text']}"
+                for e in exemplars
+            )
+            system += (
+                "\n\nApproaches that previously helped THIS client examine similar "
+                "beliefs (match their spirit, never copy them verbatim):\n" + shots
+            )
         transcript = "\n".join(f"[{t['role']}]: {t['text']}" for t in history)
         prompt = (
             (f"Conversation so far:\n{transcript}\n\n" if transcript else "")
@@ -85,7 +98,7 @@ class LoRABackend(ReframingBackend):
             "configs/dialogue.yaml:lora_backend.adapter_path. Use backend: prompt."
         )
 
-    def generate(self, distortion_profile, user_text, history) -> str:  # pragma: no cover
+    def generate(self, distortion_profile, user_text, history, exemplars=None) -> str:  # pragma: no cover
         raise NotImplementedError
 
 

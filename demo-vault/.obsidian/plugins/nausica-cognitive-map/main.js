@@ -33,24 +33,64 @@ var import_obsidian3 = require("obsidian");
 function normalizeBaseUrl(baseUrl) {
   return baseUrl.trim().replace(/\/+$/, "");
 }
-async function analyzeText(baseUrl, text) {
+async function sha256Hex(text) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  let hex = "";
+  for (const byte of new Uint8Array(digest)) {
+    hex += byte.toString(16).padStart(2, "0");
+  }
+  return hex;
+}
+async function analyzeText(baseUrl, text, authToken, fileHash) {
   const url = `${normalizeBaseUrl(baseUrl)}/analyze`;
+  const headers = { "Content-Type": "application/json" };
+  if (authToken) {
+    headers["Authorization"] = `Bearer ${authToken}`;
+  }
   let res;
   try {
     res = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text })
+      headers,
+      body: JSON.stringify({ text, source: "obsidian", file_hash: fileHash })
     });
   } catch (err) {
     const reason = err instanceof Error ? err.message : String(err);
     throw new Error(`Could not reach Nausica backend at ${url}: ${reason}`);
+  }
+  if (res.status === 401) {
+    throw new Error("Nausica: unauthorized \u2014 log in via Settings \u2192 Nausica Cognitive Map.");
   }
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
     throw new Error(`Nausica API ${res.status}: ${detail || res.statusText}`);
   }
   return await res.json();
+}
+async function loginForToken(baseUrl, email, password) {
+  const url = `${normalizeBaseUrl(baseUrl)}/auth/login`;
+  let res;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
+    throw new Error(`Could not reach Nausica backend at ${url}: ${reason}`);
+  }
+  const body = await res.text().catch(() => "");
+  if (!res.ok) {
+    let message = body || res.statusText;
+    try {
+      const parsed = JSON.parse(body);
+      if (typeof parsed.detail === "string") message = parsed.detail;
+    } catch {
+    }
+    throw new Error(`Nausica login failed: ${message}`);
+  }
+  return JSON.parse(body).access_token;
 }
 
 // src/types.ts
@@ -209,11 +249,15 @@ var RigidityMapView = class extends import_obsidian.ItemView {
 var import_obsidian2 = require("obsidian");
 var DEFAULT_SETTINGS = {
   backendUrl: "http://127.0.0.1:8000",
-  autoAnalyzeOnOpen: true
+  autoAnalyzeOnOpen: true,
+  authToken: ""
 };
 var NausicaSettingsTab = class extends import_obsidian2.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
+    // Credentials live only while the tab is open — never persisted.
+    this.email = "";
+    this.password = "";
     this.plugin = plugin;
   }
   display() {
@@ -232,6 +276,41 @@ var NausicaSettingsTab = class extends import_obsidian2.PluginSettingTab {
     new import_obsidian2.Setting(containerEl).setName("Auto-analyze on open").setDesc("Analyze a note automatically when it is opened and has no cached analysis.").addToggle(
       (toggle) => toggle.setValue(this.plugin.settings.autoAnalyzeOnOpen).onChange(async (value) => {
         this.plugin.settings.autoAnalyzeOnOpen = value;
+        await this.plugin.persist();
+      })
+    );
+    new import_obsidian2.Setting(containerEl).setName("Account").setHeading();
+    new import_obsidian2.Setting(containerEl).setName("Email").setDesc("Backend account email. Credentials are used once to get a token and never stored.").addText(
+      (text) => text.setPlaceholder("you@example.com").onChange((value) => {
+        this.email = value;
+      })
+    );
+    new import_obsidian2.Setting(containerEl).setName("Password").addText((text) => {
+      text.inputEl.type = "password";
+      text.onChange((value) => {
+        this.password = value;
+      });
+    });
+    new import_obsidian2.Setting(containerEl).setName("Log in").setDesc("Exchange email + password for an access token (stored in plugin data).").addButton(
+      (btn) => btn.setButtonText("Log in / Get token").setCta().onClick(async () => {
+        try {
+          const token = await loginForToken(
+            this.plugin.settings.backendUrl,
+            this.email.trim(),
+            this.password
+          );
+          this.plugin.settings.authToken = token;
+          await this.plugin.persist();
+          new import_obsidian2.Notice("Nausica: logged in \u2014 token saved.");
+          this.display();
+        } catch (err) {
+          new import_obsidian2.Notice(err instanceof Error ? err.message : String(err));
+        }
+      })
+    );
+    new import_obsidian2.Setting(containerEl).setName("Access token").setDesc("Or paste a token directly (from the web app or /auth/login).").addText(
+      (text) => text.setPlaceholder("eyJ\u2026").setValue(this.plugin.settings.authToken).onChange(async (value) => {
+        this.plugin.settings.authToken = value.trim();
         await this.plugin.persist();
       })
     );
@@ -361,7 +440,8 @@ var NausicaPlugin = class extends import_obsidian3.Plugin {
   // --- analysis ------------------------------------------------------------
   async analyzeFile(file) {
     const text = await this.app.vault.cachedRead(file);
-    const response = await analyzeText(this.settings.backendUrl, text);
+    const fileHash = await sha256Hex(text);
+    const response = await analyzeText(this.settings.backendUrl, text, this.settings.authToken, fileHash);
     const analysis = {
       distortions: response.distortions,
       cfi: response.cfi,
@@ -372,6 +452,10 @@ var NausicaPlugin = class extends import_obsidian3.Plugin {
     return analysis;
   }
   async analyzeActiveNote() {
+    if (!this.settings.authToken) {
+      new import_obsidian3.Notice("Nausica: log in first \u2014 Settings \u2192 Nausica Cognitive Map.");
+      return;
+    }
     const file = this.app.workspace.getActiveFile();
     if (!file || file.extension !== "md") {
       new import_obsidian3.Notice("Nausica: open a Markdown note first.");
@@ -388,6 +472,10 @@ var NausicaPlugin = class extends import_obsidian3.Plugin {
     }
   }
   async analyzeAllNotes() {
+    if (!this.settings.authToken) {
+      new import_obsidian3.Notice("Nausica: log in first \u2014 Settings \u2192 Nausica Cognitive Map.");
+      return;
+    }
     const files = this.app.vault.getMarkdownFiles();
     if (files.length === 0) {
       new import_obsidian3.Notice("Nausica: no Markdown notes in this vault.");
@@ -429,6 +517,7 @@ var NausicaPlugin = class extends import_obsidian3.Plugin {
       return;
     }
     if (!this.settings.autoAnalyzeOnOpen) return;
+    if (!this.settings.authToken) return;
     try {
       const analysis = await this.analyzeFile(file);
       if (this.app.workspace.getActiveFile()?.path === file.path) {

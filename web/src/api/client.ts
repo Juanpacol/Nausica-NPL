@@ -47,18 +47,53 @@ export interface Trajectory {
   is_improving: boolean | null
 }
 
+export interface TokenResponse {
+  access_token: string
+  token_type: string
+  user_id: string
+}
+
 const BASE = '/api'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = localStorage.getItem('nausica_token')
   const res = await fetch(`${BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
     ...init,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...init?.headers,
+    },
   })
   if (!res.ok) {
-    const detail = await res.text().catch(() => '')
-    throw new Error(`API ${res.status}: ${detail || res.statusText}`)
+    if (res.status === 401 && !path.startsWith('/auth/')) {
+      window.dispatchEvent(new CustomEvent('nausica:unauthorized'))
+    }
+    const body = await res.text().catch(() => '')
+    let message = body || res.statusText
+    try {
+      const parsed = JSON.parse(body) as { detail?: unknown }
+      if (typeof parsed.detail === 'string') message = parsed.detail
+    } catch {
+      // non-JSON error body — keep raw text
+    }
+    throw new Error(message)
   }
   return res.json() as Promise<T>
+}
+
+export function registerUser(email: string, password: string): Promise<TokenResponse> {
+  return request<TokenResponse>('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  })
+}
+
+export function loginUser(email: string, password: string): Promise<TokenResponse> {
+  return request<TokenResponse>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password }),
+  })
 }
 
 export function analyze(text: string): Promise<AnalyzeResponse> {
@@ -77,4 +112,55 @@ export function reframe(text: string, sessionId?: string): Promise<ReframeRespon
 
 export function getTrajectory(sessionId: string): Promise<Trajectory> {
   return request<Trajectory>(`/trajectory/${sessionId}`)
+}
+
+// ---- Phase 4/5: profiling, consent, clinician dashboard ----
+
+export interface ArchetypeProfile {
+  archetype: string
+  counts: Record<string, number>
+  trend: 'improving' | 'worsening' | 'stable' | null
+  n_texts: number
+  disclaimer: string
+}
+
+export interface PatientSummary {
+  user_id: string
+  email: string
+  n_texts: number
+  latest_cfi: number | null
+  archetype: string
+  trend: string | null
+}
+
+export function getArchetypeProfile(): Promise<ArchetypeProfile> {
+  return request<ArchetypeProfile>('/profile/archetype')
+}
+
+export function getConsent(): Promise<{ consent_clinician_view: boolean }> {
+  return request('/profile/consent')
+}
+
+export function setConsent(consent: boolean): Promise<{ consent_clinician_view: boolean }> {
+  return request('/profile/consent', {
+    method: 'POST',
+    body: JSON.stringify({ consent_clinician_view: consent }),
+  })
+}
+
+export function getOrgPatients(): Promise<{ patients: PatientSummary[] }> {
+  return request('/org/patients')
+}
+
+/** PDF endpoints need the Authorization header, so a plain <a href> can't work —
+ * fetch as blob and open an object URL instead. */
+export async function openReport(userId: string): Promise<void> {
+  const token = localStorage.getItem('nausica_token')
+  const res = await fetch(`${BASE}/reports/${userId}.pdf`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+  if (!res.ok) throw new Error(`Report failed: ${res.status}`)
+  const url = URL.createObjectURL(await res.blob())
+  window.open(url, '_blank')
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
 }

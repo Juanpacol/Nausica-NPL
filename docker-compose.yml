@@ -1,0 +1,20 @@
+# Development infrastructure. Local alternative: Homebrew postgresql@18 with a
+# `nausica` database (src/db/session.py defaults to postgresql+psycopg://localhost/nausica).
+#
+#   docker compose up -d db
+#   DATABASE_URL=postgresql+psycopg://nausica:nausica@localhost:5432/nausica alembic upgrade head
+
+services:
+  db:
+    image: pgvector/pgvector:pg16   # Postgres 16 + pgvector (Phase 6 RAG)
+    environment:
+      POSTGRES_USER: nausica
+      POSTGRES_PASSWORD: nausica
+      POSTGRES_DB: nausica
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

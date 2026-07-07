@@ -3,6 +3,6 @@
 
 export { AnalysisStore } from './store';
 export { cfiHex, cfiLabelText, CFI_RAMP_HEX, DISTORTION_DISPLAY, DISTORTION_HEX } from './colors';
-export { normalizeBaseUrl } from './api';
+export { normalizeBaseUrl, sha256Hex } from './api';
 export { DISTORTION_LABELS } from './types';
 export type { DistortionLabel, Distortions, AnalyzeResponse, NoteAnalysis, NausicaCache } from './types';

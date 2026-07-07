@@ -60,17 +60,34 @@ python -m src.data_pipeline.dialogue_expansion --limit 50
 python -m src.evaluation.llm_judge \
   --input data/synthetic/dialogues.jsonl --output results/judge_scores.jsonl
 
-# 8. Serve the API
+# 8. Set up the database (Postgres; Homebrew or docker compose up -d db)
+pip install -e ".[db]"
+createdb nausica            # or: docker compose up -d db  (+ DATABASE_URL in .env)
+alembic upgrade head
+
+# 9. Serve the API
 uvicorn src.api.main:app --reload
 ```
 
 ## API
 
+All data endpoints require a Bearer JWT (`POST /auth/register` → token).
+
 | Endpoint | What it does |
 |---|---|
-| `POST /analyze` | text → per-distortion probabilities + CFI |
-| `POST /reframe` | text (+ optional `session_id`) → Socratic counselor reply + CFI delta |
+| `POST /auth/register` · `/auth/login` | email + password → JWT |
+| `POST /analyze` | text → per-distortion probabilities + CFI (persisted) |
+| `POST /analyze/audio` | voice note → local Whisper transcript → same pipeline |
+| `POST /reframe` | text (+ optional `session_id`) → Socratic reply + CFI delta; RAG-augmented with the user's own past effective reframes |
 | `GET /trajectory/{session_id}` | CFI evolution across the session's turns |
+| `POST /predict_trajectory` | distortion history → predicted next-turn vector |
+| `POST /rigidity_score` | text → embedding-axis rigidity score |
+| `POST /composite_rigidity` | text → blend of all three rigidity signals |
+| `GET /profile/archetype` | dominant mindset archetype + trend over the user's history |
+| `GET\|POST /profile/consent` | read / grant / revoke clinician visibility (opt-in) |
+| `GET /org/patients` | clinician dashboard: consenting patients + archetype + latest CFI |
+| `GET /reports/{user_id}.pdf` | clinical progress report (self, or clinician with consent) |
+| `POST /turns/{id}/feedback` | clinician marks reframe quality (future DPO data) |
 
 ## Tests
 

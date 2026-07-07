@@ -4,7 +4,8 @@
     "analyze": "Analyze",
     "reframe": "Reframe",
     "themeLight": "Light mode",
-    "themeDark": "Dark mode"
+    "themeDark": "Dark mode",
+    "dashboard": "Dashboard"
   },
   "landing": {
     "title": "Nausica",
@@ -58,5 +59,36 @@
     "disclaimer": "Research prototype — not a medical device or a diagnosis. If you are in crisis, seek immediate professional help.",
     "error": "Could not reach the analysis server. Check that the API is running.",
     "loading": "Loading…"
+  },
+  "auth": {
+    "login": "Log in",
+    "register": "Create account",
+    "email": "Email",
+    "password": "Password",
+    "submitLogin": "Log in",
+    "submitRegister": "Sign up",
+    "submitting": "One moment…",
+    "error": "Could not sign in. Try again.",
+    "switchToRegister": "No account? Create one",
+    "switchToLogin": "Already have an account? Log in",
+    "logout": "Log out"
+  },
+  "clinician": {
+    "title": "Cognitive Dashboard",
+    "subtitle": "Your thinking-pattern profile, and — for clinicians — consenting patients in your organization.",
+    "myProfile": "My profile",
+    "dominantPattern": "Dominant pattern",
+    "textsAnalyzed": "texts analyzed",
+    "noProfileYet": "No analyses yet — analyze some text or chat in Reframe to build your profile.",
+    "consentLabel": "Allow clinicians in my organization to view my progress",
+    "consentNote": "Opt-in and reversible at any time. Without consent, no clinician can see your data.",
+    "patients": "Patients",
+    "noPatients": "No consenting patients yet.",
+    "report": "Report (PDF)",
+    "trend": {
+      "improving": "improving",
+      "worsening": "worsening",
+      "stable": "stable"
+    }
   }
 }

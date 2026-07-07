@@ -4,7 +4,8 @@
     "analyze": "Analizar",
     "reframe": "Reencuadre",
     "themeLight": "Modo claro",
-    "themeDark": "Modo oscuro"
+    "themeDark": "Modo oscuro",
+    "dashboard": "Panel"
   },
   "landing": {
     "title": "Nausica",
@@ -58,5 +59,36 @@
     "disclaimer": "Prototipo de investigación — no es un dispositivo médico ni un diagnóstico. Si estás en crisis, busca ayuda profesional inmediata.",
     "error": "No se pudo conectar con el servidor de análisis. Verifica que la API esté corriendo.",
     "loading": "Cargando…"
+  },
+  "auth": {
+    "login": "Iniciar sesión",
+    "register": "Crear cuenta",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "submitLogin": "Entrar",
+    "submitRegister": "Registrarse",
+    "submitting": "Un momento…",
+    "error": "No se pudo iniciar sesión. Inténtalo de nuevo.",
+    "switchToRegister": "¿Sin cuenta? Crea una",
+    "switchToLogin": "¿Ya tienes cuenta? Inicia sesión",
+    "logout": "Cerrar sesión"
+  },
+  "clinician": {
+    "title": "Panel Cognitivo",
+    "subtitle": "Tu perfil de patrones de pensamiento y — para clínicos — pacientes de tu organización con consentimiento.",
+    "myProfile": "Mi perfil",
+    "dominantPattern": "Patrón dominante",
+    "textsAnalyzed": "textos analizados",
+    "noProfileYet": "Aún no hay análisis — analiza texto o conversa en Reencuadre para construir tu perfil.",
+    "consentLabel": "Permitir que clínicos de mi organización vean mi progreso",
+    "consentNote": "Opcional y reversible en cualquier momento. Sin consentimiento, ningún clínico puede ver tus datos.",
+    "patients": "Pacientes",
+    "noPatients": "Aún no hay pacientes con consentimiento.",
+    "report": "Informe (PDF)",
+    "trend": {
+      "improving": "mejorando",
+      "worsening": "empeorando",
+      "stable": "estable"
+    }
   }
 }
