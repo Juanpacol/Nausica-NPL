@@ -1,0 +1,20 @@
+# Distortion classifier (Phase 2)
+
+encoder:
+  # CC-BY-NC-4.0, gated — see docs/LICENSING.md. Swap to roberta-base if the
+  # gate/license becomes a problem; everything else is unchanged.
+  base_model: mental/mental-roberta-base
+  fallback_model: roberta-base
+  max_length: 256
+
+training:
+  learning_rate: 2.0e-5
+  batch_size: 16
+  epochs: 4
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  output_dir: results/distortion_classifier
+
+# Multi-label: sigmoid + BCEWithLogits, threshold applied at inference
+inference:
+  decision_threshold: 0.5

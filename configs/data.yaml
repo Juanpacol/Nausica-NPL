@@ -1,0 +1,50 @@
+# Datasets + taxonomy + CFI weights. Human-readable definitions: docs/TAXONOMY.md
+
+datasets:
+  angst:
+    hf_id: ameyhengle/ANGST
+    local_dir: data/raw/angst
+  mental_health_classification:
+    hf_id: ourafla/Mental-Health_Text-Classification_Dataset
+    local_dir: data/raw/mental_health_classification
+  counseling_conversations:
+    hf_id: Amod/mental_health_counseling_conversations
+    local_dir: data/raw/counseling_conversations
+
+paths:
+  processed_dir: data/processed
+  synthetic_dir: data/synthetic
+
+taxonomy:
+  labels:
+    - all_or_nothing
+    - overgeneralization
+    - emotional_reasoning
+    - catastrophizing
+    - mind_reading
+
+# CFI = sum(weight_i * prob_i). Higher = more rigid. Rationale in docs/TAXONOMY.md.
+cfi_weights:
+  all_or_nothing: 0.25
+  overgeneralization: 0.25
+  catastrophizing: 0.20
+  emotional_reasoning: 0.15
+  mind_reading: 0.15
+
+weak_labeling:
+  model: claude-sonnet-5
+  # Labels below this confidence are dropped to reduce noise
+  confidence_threshold: 0.6
+  # Fraction of labeled examples reserved for the manual spot-check
+  spot_check_fraction: 0.10
+
+dialogue_expansion:
+  model: claude-sonnet-5
+  min_turns: 5
+  max_turns: 7
+
+splits:
+  train: 0.70
+  val: 0.15
+  test: 0.15
+  seed: 42

@@ -1,0 +1,16 @@
+# Reframing dialogue module (Phase 4)
+
+# "prompt"  -> PromptBackend (Anthropic API, no GPU, default)
+# "lora"    -> LoRABackend (QLoRA fine-tuned open model; NOT implemented until
+#              GPU access is confirmed — see CLAUDE.md)
+backend: prompt
+
+prompt_backend:
+  model: claude-sonnet-5
+  max_tokens: 400
+  # Socratic style knobs
+  max_questions_per_turn: 1
+
+lora_backend:
+  base_model: meta-llama/Meta-Llama-3-8B-Instruct
+  adapter_path: results/reframing_lora
