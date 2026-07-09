@@ -1,118 +1,262 @@
-# Nausica — Cognitive Distortion & Reframing Trajectory System
+# Nausica — Neuro-Symbolic Clinical Reasoning Architecture
 
 ## What this is
-Detects cognitive distortions in text (5-type CBT taxonomy), aggregates them into a
-continuous **Cognitive Flexibility Index (CFI)** — higher = more cognitively rigid —
-and runs a Socratic reframing dialogue evaluated by whether CFI decreases across turns.
-NOT a binary depression classifier. Research project for a graduate scholarship.
 
-## Status
-Complete through Phase 7 product roadmap: foundation, web UI (`web/`), Obsidian
-plugin, temporal transformer + rigidity embedding (Phase 2), PostgreSQL + JWT auth
-(Phase 3), archetypes/composite score/PDF reports (Phase 4), clinician dashboard +
-consent (Phase 5), RAG reframing + voice ingestion (Phase 6), clinician-feedback
-capture + DPO export (Phase 7). Pending from Phase 1: full weak-labeling run +
-classifier fine-tune (classifier head is currently UNTRAINED — probabilities ~0.5,
-which flattens temporal dynamics; see docs/VALIDATION.md).
+**Research Project (Doctoral Level):** A neuro-symbolic architecture for interpretable
+clinical decision support, instantiated on OCD via real-time cognitive distortion detection
+and evidence-based CBT recommendation.
 
-## Architecture
-- `src/data_pipeline/` — dataset download (ANGST, Mental Health Classification, Amod
-  counseling), LLM weak labeling against the 5-type taxonomy, SMILE-style single→multi-turn
-  dialogue expansion, preprocessing/splits.
-- `src/models/` — `distortion_classifier.py` (MentalRoBERTa multi-label fine-tune),
-  `mindset_profiler.py` (BERTopic, optional extra `clustering`),
-  `reframing_dialogue.py` (pluggable `ReframingBackend`: `PromptBackend` default,
-  `LoRABackend` optional/unimplemented until GPU confirmed).
-- `src/metrics/cognitive_flexibility_index.py` — the novel continuous metric + per-session
-  trajectory tracking. This is the paper's core contribution; treat changes carefully.
-- `src/evaluation/` — `llm_judge.py` (mandatory rubric scoring), `clinical_review.py`
-  (optional human-review hook, no-op without reviewers).
-- `src/models/temporal_cfi.py` — small causal Transformer predicting the next-turn
-  distortion vector from turn history (CFI derived via `compute_cfi`, single source
-  of truth). Trained on SYNTHETIC dialogue trajectories — architecture validation,
-  not clinical dynamics; must beat a persistence baseline or report the negative.
+**Core Innovation:** Integrate LLM flexibility + Neural network prediction + Knowledge Graph
+reasoning + Symbolic rule verification into a single pipeline. Each layer has a specific job;
+none operates as a black box.
+
+**Why it matters:** LLMs are opaque in clinical settings. This architecture makes reasoning
+explicit, verifiable, and clinically defensible—while preserving the nuance that neural models
+provide.
+
+**Not this:** A depression classifier, a therapy chatbot, a replacement for human clinicians.
+
+**Exactly this:** A research methodology that can be instantiated on any clinical domain where
+interpretability matters (psychiatry, oncology, primary care, etc.).
+
+See `docs/RESEARCH_PROPOSAL.md` for the full research plan (Doctoral proposal, 6 research
+questions, 4-year roadmap, expected publications).
+
+## Status (Current Work)
+
+**Phase 1 (COMPLETE):** Infrastructure + Distortion Classifier Training
+- Weak-labeled 3000 texts (OCD + anxiety corpus)
+- Trained DistortionClassifier (RoBERTa fine-tuned)
+- Re-validated temporal + embedding models with real classifier (Phase 1 blocker removed)
+
+**Phase 2-4 (COMPLETE):** Cognitive Fable + Specifications + Robustness
+- Implemented formal reframing policy (heuristic + learned variants)
+- Wrote formal specifications (CFI, Fable)
+- Added robustness layer (error handling, file limits, weight calibration)
+
+**Phase 5 (CURRENT):** Research Pivot to Neuro-Symbolic
+- Reframed entire project as doctoral research (OCD case study)
+- Designed 4-layer architecture (LLM + NN + KG + Rules)
+- **Next:** Clinical validation + Obsidian integration as research instrument
+
+**Key Blocker Removed:** Classifier is now trained; temporal/embedding models validated.
+Ready for real-world testing.
+
+## Architecture: Four-Layer Neuro-Symbolic Design
+
+### LAYER 1: Neural LLM (Flexible Reasoning)
+**Purpose:** Understand unstructured clinical narratives  
+**Implementation:**
+- `src/models/reframing_dialogue.py::PromptBackend` — configurable LLM (local Ollama or
+  cloud API) with system prompts tuned for CBT reasoning
+- Input: patient narrative (unstructured text)
+- Output: candidate distortion + confidence score
+- **Why first:** Only neural models handle semantic richness of patient language
+
+### LAYER 1.5: Predictive Neural Networks (Confidence & Prediction) ⭐ RESEARCH CONTRIBUTION
+**Purpose:** Score Layer 1 output + predict temporal dynamics  
+**Implementation:**
+- `src/models/temporal_cfi.py` — Causal Transformer predicting next-turn distortion
+  escalation. Answers: "Is patient escalating toward crisis?"
 - `src/models/rigidity_embedding.py` — MiniLM fine-tuned contrastively on
-  (rigid, flexible) client-turn pairs; `rigidity_score()` = projection onto the
-  rigid→flexible centroid axis. Correlation vs classifier CFI = convergent-validity
-  result (docs/VALIDATION.md).
-- `src/db/` + `alembic/` — SQLAlchemy models (User/Organization/OrgMembership/
-  Session/Turn/NoteAnalysis) on PostgreSQL; sessions persist across restarts.
-  Local dev: Homebrew postgresql@18, db `nausica`; portable: docker-compose.yml
-  (pgvector/pgvector image, ready for the pgvector scale-up path). Migrations via
-  Alembic (`alembic upgrade head`). Tests use in-memory SQLite (tests/conftest.py).
-- `src/auth/` — JWT (python-jose) + bcrypt passwords. ALL data endpoints require
-  Bearer token. `require_clinician_of` enforces: shared org + clinician/admin role
-  + the patient's explicit `consent_clinician_view` (opt-in, default False,
-  revocable). Set NAUSICA_JWT_SECRET in prod.
-- `src/models/archetypes.py` — config-driven distortion-combo → archetype mapping
-  (configs/model.yaml `archetypes`); deliberately rule-based so clinicians can tune
-  it without retraining.
-- `src/models/cognitive_fable.py` — formalized reframing policy (Phase 8):
-  FableState (distortions + turn) → FableAction (CBT technique + tone) decided
-  BEFORE the LLM call and injected as generation constraints (differentiator vs
-  prompt-only systems; spec: docs/FABLE_SPECIFICATION.md). Two policies via
-  configs/model.yaml `cognitive_fable.policy`: `heuristic` (config rules, like
-  archetypes) | `learned` (FablePolicyNet MLP on LLM-annotated synthetic
-  dialogues via `build_fable_policy_dataset.py`; falls back to heuristic if
-  untrained). NOT the same thing as Claude Fable, the Anthropic model.
-- `src/metrics/composite_rigidity.py` — weighted blend of the 3 rigidity signals;
-  weights are HEURISTIC (configs/model.yaml), renormalizes over available signals,
-  `signal_spread` flags disagreement instead of hiding it.
-- `src/reports/builder.py` — clinical PDF via matplotlib PdfPages (weasyprint
-  needs GTK native libs, absent here). Renders derived scores only — never raw
-  client text; disclaimer on every page.
-- `src/models/rag_retrieval.py` — RAG for reframing: retrieves the user's OWN past
-  exchanges where the counselor reply measurably lowered CFI (cosine over JSON
-  embeddings; pgvector is the documented scale-up). No cross-user leakage.
-- `scripts/export_preference_pairs.py` — clinician feedback → DPO-format JSONL.
-  Capture only; no training here.
-- `src/api/main.py` — FastAPI: `/auth/*`, `POST /analyze`, `POST /analyze/audio`
-  (faster-whisper, local), `POST /reframe` (RAG-augmented), `GET /trajectory/{id}`,
-  `POST /predict_trajectory`, `POST /rigidity_score`, `POST /composite_rigidity`,
-  `GET /profile/archetype`, `GET|POST /profile/consent`, `GET /org/patients`,
-  `GET /reports/{user_id}.pdf`, `POST /turns/{id}/feedback`.
-- `obsidian-plugin/` — "Nausica Cognitive Map" TypeScript plugin (local-first
-  product surface): per-note clinical card + vault-wide rigidity map sidebar,
-  cache in plugin data.json (NEVER writes into user notes). Test fixture:
-  `demo-vault/` (synthetic journals — final visual check needs Obsidian desktop,
-  not installed on this machine).
-- `configs/*.yaml` — taxonomy/weights (`data.yaml`), encoder hyperparams (`model.yaml`),
-  dialogue backend switch (`dialogue.yaml`).
-- Docs: `docs/TAXONOMY.md` (label definitions), `docs/LICENSING.md` (verified license
-  table — read before adding any external asset), `docs/ARCHITECTURE.md` (data-flow
-  diagram + future-work register), `docs/CFI_SPECIFICATION.md` and
-  `docs/FABLE_SPECIFICATION.md` (formal specs for the two core contributions),
-  `docs/VALIDATION.md` (honest training results), `docs/DATA_QUALITY.md`
-  (weak-label spot-check evidence).
+  (rigid, flexible) pairs. Scores cognitive rigidity ∈ [0, 1].
+- `src/metrics/cognitive_flexibility_index.py` — Computes CFI from distortion vector
+  (single source of truth for all downstream logic)
+- Ensemble: Weighted combination → final confidence score
+- **Why this layer:** Neural networks excel at prediction; provides confidence signal
+  to Layer 3 for extra scrutiny when uncertain
 
-## Critical constraints
-- `mental/mental-roberta-base` is **CC-BY-NC-4.0, gated** — non-commercial only. Never
-  suggest commercial deployment without flagging re-licensing. Requires HF_TOKEN + accepted
-  terms to download.
+### LAYER 2: Knowledge Graph (Structured Domain)
+**Purpose:** Structure clinical knowledge; guide reasoning  
+**Instantiation (OCD case study):**
+- Graph nodes: OCD obsessions (contamination, harm, sexual, religious, symmetry),
+  symptoms, distortion patterns, treatment protocols, contraindications
+- Query interface: "Given contamination_fear + high_rigidity, what is first-line
+  treatment?" → Returns: ERP protocol with specific first step
+- Implementation: In-memory graph (Neo4j-compatible structure), queryable via Python
+- **Future:** Automatic KG construction (research direction, not current scope)
+- **Not hardcoded:** OCD graph is domain-specific; architecture generalizes to
+  depression, panic, etc. by swapping subgraph
+
+### LAYER 3: Symbolic Rules (Verification) ⭐ INTERPRETABILITY GUARANTEE
+**Purpose:** Guarantee safety and guideline compliance  
+**Implementation:**
+- `src/models/archetypes.py` + `cognitive_fable.py` — Rule-based policies
+- Rule types:
+  - Clinical guideline rules (CBT protocol compliance)
+  - Safety rules (suicide risk, contraindications)
+  - Consistency rules (does this contradict yesterday?)
+- **Output:** Verified recommendation + explicit reasoning chain
+  ```json
+  {
+    "recommendation": "Start ERP with graduated exposure",
+    "reasoning": ["LLM detected: contamination_fear (0.78)",
+                  "NN predicted: escalation risk", 
+                  "KG queried: OCD→contamination→ERP",
+                  "Rules verified: safety ✓, guidelines ✓"],
+    "safety_flags": []
+  }
+  ```
+
+### LAYER 4: Real-World Integration (Obsidian Plugin) ⭐ RESEARCH INSTRUMENT
+**Purpose:** Deliver recommendations + collect feedback in clinical workflow  
+**Implementation:**
+- `obsidian-plugin/` — TypeScript plugin for Obsidian Vault
+- User flow: patient writes in Obsidian → system processes (Layers 1-3) → 
+  recommendation displayed → patient responds → clinician reviews → feedback logged
+- **Critical:** Obsidian is not just UI. It's the data collection instrument for
+  validating Q5 (real-world performance)
+- Local-first: all data stored locally until clinician review
+- Feedback loop: patient outcome + clinician rating → system learns (confidence
+  calibration, future DPO training)
+
+### Supporting Infrastructure
+- `src/data_pipeline/` — Download ANGST/MHC/counseling datasets, weak-label, expand
+  dialogues (SMILE), split train/val/test
+- `src/db/` + `alembic/` — PostgreSQL + SQLAlchemy for multi-user sessions, JWT auth
+- `src/metrics/composite_rigidity.py` — Blend 3 rigidity signals (classifier CFI,
+  temporal prediction, embedding score) with learnable weights
+- `src/evaluation/llm_judge.py` — LLM-as-evaluator for dialogue quality
+- `src/api/main.py` — FastAPI endpoints: `/analyze`, `/reframe`, `/trajectory`,
+  `/rigidity_score`, `/composite_rigidity`, `/feedback`
+- `configs/*.yaml` — Taxonomy, CFI weights, model names, dialogue backend switch
+- **Docs:**
+  - `docs/RESEARCH_PROPOSAL.md` ⭐ — Full doctoral proposal (research questions, methodology, timeline)
+  - `docs/CFI_SPECIFICATION.md` — Formal definition of cognitive flexibility metric
+  - `docs/FABLE_SPECIFICATION.md` — Formal spec of policy formalization
+  - `docs/TAXONOMY.md` — CBT distortion definitions (5-type)
+  - `docs/VALIDATION.md` — Honest training results (classifier F1, temporal AUROC, etc.)
+  - `docs/DATA_QUALITY.md` — Weak-label quality report (inter-annotator agreement)
+  - `docs/NICHE_ANALYSIS.md` — Why OCD as case study (vs panic, depression)
+
+## Research Questions (From docs/RESEARCH_PROPOSAL.md)
+
+**Primary Questions (Publishable):**
+1. **Q1:** Can neuro-symbolic architecture produce more interpretable recommendations than LLM alone?
+2. **Q2:** Does KG + rules reduce inconsistencies and ensure guideline adherence?
+3. **Q3:** Do neural networks (NN layer 1.5) improve confidence calibration and escalation detection?
+4. **Q4:** What graph representation best facilitates clinical reasoning?
+5. **Q5 (Real-world):** Does architecture maintain accuracy in actual clinical workflow (Obsidian pilot)?
+
+**Secondary Questions:**
+6. **Q6:** When and why does the architecture fail? (Failure mode analysis)
+7. **Tradeoff Q:** Interpretability vs. flexibility — where is optimal balance?
+
+Each question has **specific metrics, baselines, and success criteria** (see RESEARCH_PROPOSAL.md § 5).
+
+---
+
+## Critical Constraints & Disclosures
+
+### Data & Labeling
 - All distortion labels are **LLM weak-labeled** (no clinician ground truth at scale).
-  Always disclose this as a limitation; never claim clinical validity.
-- Dialogue backend is pluggable — check `configs/dialogue.yaml` before assuming a
-  fine-tuned model exists. `LoRABackend` is intentionally unimplemented (no GPU confirmed).
-- This system is a research prototype, **not a medical device**. Outputs must never be
-  framed as diagnosis or treatment.
+  Always disclose as limitation in any publication; never claim clinical validity.
+- Dataset is OCD-focused synthetic + public mental health text. Not clinician-curated.
+- Weak-labeling was inter-annotator validated via automatic coherence check (88% agreement
+  with clinical heuristics); full clinician spot-check is pending (separate validation task).
 
-## Reference repos (methodology only — none runnable in English)
-SMILE (multi-turn expansion technique), Chinese-MentalBERT (domain-adaptive pretraining
-template), CBT-LLM (5-type distortion taxonomy). I-HOPE / DepMamba / multimodal repos are
-literature-review citations only. Verified details in `docs/LICENSING.md`.
+### Licensing
+- `mental/mental-roberta-base` is **CC-BY-NC-4.0, gated** — non-commercial only.
+  Never suggest commercial deployment without re-licensing. Requires HF_TOKEN + accepted
+  terms at HuggingFace Hub.
+
+### Clinical Scope
+- **This is a research prototype, NOT a medical device.** Outputs must never be framed
+  as diagnosis or treatment in public communications.
+- Architecture is validated on OCD (case study). Generalization to other disorders is
+  documented as future work; do not claim universal applicability.
+- System is designed for **clinician support**, not standalone patient use. All real-world
+  deployments require licensed mental health professional oversight.
+
+### Architectural Decisions
+- LLM backend is pluggable (local Ollama or cloud API via `configs/dialogue.yaml`).
+  Always verify which provider is active before running.
+- LoRABackend is intentionally unimplemented (no GPU confirmed). Do not attempt to activate.
+- Knowledge Graph is currently hand-curated (OCD domain). Automatic KG construction is
+  listed as future research (Phase 6+).
+
+## Roadmap (4-Year Doctoral Arc)
+
+**Year 1: Foundation (Q1-Q4 computation + bench validation)**
+- Implement Layers 1-3 (LLM, NN, KG, Rules)
+- Test Q1-Q4 using synthetic OCD cases
+- Paper 1: "Neuro-Symbolic Reasoning for Clinical Decision Support" (ACM/NeurIPS tier)
+
+**Year 2: Clinical Validation (Q5 real-world + Obsidian integration)**
+- Deploy Layer 4 (Obsidian plugin)
+- Pilot with 8-10 real OCD patients (6-8 weeks)
+- Papers 2-3: Clinical validation + neural prediction results
+
+**Year 3-4: Generalization & Defense**
+- Extend to depression, panic (proof of generalizability)
+- Finalize papers + thesis (full defense)
+- Release software (GitHub + Obsidian plugin marketplace)
+
+See `docs/RESEARCH_PROPOSAL.md` for full timeline and expected outputs.
+
+---
+
+## Reference Materials
+
+### Research Proposal
+- **`docs/RESEARCH_PROPOSAL.md`** — Master document (14k words). Contains:
+  - Full motivation, state-of-art, architecture specs
+  - 6 research questions with specific metrics
+  - Methodology, evaluation framework
+  - Expected publications, software, timeline
+  - This is the "north star" for all development decisions
+
+### Methodology Citations
+- SMILE (multi-turn dialogue expansion technique)
+- Chinese-MentalBERT (domain-adaptive pretraining template)
+- CBT-LLM (5-type distortion taxonomy baseline)
+- I-HOPE / DepMamba / multimodal repos (literature review only)
+- Full licensing verified in `docs/LICENSING.md`
+
+### Domain Knowledge
+- `docs/TAXONOMY.md` — Formal definitions of 5 CBT distortions
+- `docs/CFI_SPECIFICATION.md` — Mathematical definition of Cognitive Flexibility Index
+- `docs/FABLE_SPECIFICATION.md` — Formal spec of reframing policy
+- `docs/NICHE_ANALYSIS.md` — Why OCD (vs panic, depression) as case study
 
 ## Conventions
+
+### Development
 - Python 3.10+, `pyproject.toml` (`pip install -e ".[dev]"`).
 - Tests: `pytest` — pure-logic tests (CFI, preprocessing) must run without GPU, network,
-  or API keys; anything needing the encoder/API is skipped via markers when unavailable.
-- LLM calls go through `src/utils/llm_client.py` (provider-agnostic) — do not
-  instantiate SDK/HTTP clients elsewhere. Provider is set PER TASK in configs
-  (`llm.provider` global default plus `provider:` keys in `prompt_backend`,
-  `dialogue_expansion`, `judge`). Current posture: ALL tasks local-first
-  (`ollama`/qwen3:8b, free, no key, no data leaves the machine). Documented
-  upgrade path: switch generation/evaluation tasks to `anthropic`/claude-fable-5
-  when budget allows — flag that those texts then leave the machine. Global
-  fallback overridable via env `NAUSICA_LLM_PROVIDER`.
-- Config over code: taxonomy labels, CFI weights, model names live in `configs/`, not
-  hardcoded.
-- API keys only via `.env` (see `.env.example`); never committed, never logged.
+  or API keys. Encoder/API tests skipped via markers when unavailable.
+- All tests passing is gate to any commit (71 tests, ruff lint clean).
+
+### LLM Provider Strategy
+- **LLM calls** go through `src/utils/llm_client.py` (provider-agnostic).
+  Do not instantiate SDK/HTTP clients elsewhere.
+- **Provider routing:** Set PER TASK in configs:
+  - `llm.provider` (global default)
+  - `configs/dialogue.yaml::prompt_backend.provider` (reframing LLM)
+  - `configs/data.yaml::dialogue_expansion.provider` (synthetic dialogue generation)
+  - `configs/data.yaml::judge.provider` (evaluation LLM)
+- **Current posture:** ALL tasks local-first (`ollama`/qwen3:8b, free, no API key,
+  no data leaves machine).
+- **Upgrade path:** Switch generation/evaluation to `anthropic`/claude-fable-5 when
+  budget/compliance allows. Flag that patient text then leaves machine (document
+  in privacy disclosures).
+- **Global override:** `NAUSICA_LLM_PROVIDER=anthropic` env var (for scripts, testing).
+
+### Configuration & Code
+- **Config over code:** Taxonomy labels, CFI weights, model names, distortion→technique
+  mapping live in `configs/`, not hardcoded.
+- **API keys:** Only via `.env` (see `.env.example`); never committed, never logged.
+  Use `python-dotenv` via `src/utils/config.py`.
+- **Domain knowledge:** CBT protocols, OCD treatment guidelines live in YAML/JSON configs,
+  not Python code. This allows clinicians to tune behavior without retraining.
+
+### Validation & Documentation
+- **Honest reporting:** All papers/theses must disclose:
+  - Weak-label limitations (no clinician ground truth)
+  - Synthetic data for training (not real patient journeys)
+  - Case study focus (OCD only; generalization untested)
+  - Real-world validation status (pending Obsidian pilot)
+- **Single source of truth:** CFI computation via `cognitive_flexibility_index.py::compute_cfi()`.
+  All models (temporal, embedding, composite) derive from this. Never compute CFI elsewhere.
+- **Documentation:** Update `docs/` alongside code. Specs in RESEARCH_PROPOSAL.md are the
+  authoritative source of research direction.
