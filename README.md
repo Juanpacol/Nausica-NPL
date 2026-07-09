@@ -1,20 +1,40 @@
 # Nausica
 
-**Cognitive distortion detection + CBT Socratic reframing, measured by a continuous
-Cognitive Flexibility Index (CFI).**
+**A neuro-symbolic architecture for interpretable clinical decision support,
+instantiated on OCD via real-time cognitive distortion detection and evidence-based
+CBT recommendation.**
 
-Most mental-health NLP repos stop at binary classification ("depressed / not depressed").
-Nausica instead:
+Most mental-health NLP repos stop at an opaque classifier. Nausica instead integrates
+four layers into a single pipeline — LLM flexibility, neural prediction, knowledge-graph
+reasoning, and symbolic rule verification — so that every recommendation carries an
+explicit, verifiable, clinically defensible reasoning chain:
 
-1. **Detects 5 cognitive distortion types** (multi-label, CBT taxonomy: all-or-nothing,
-   overgeneralization, emotional reasoning, catastrophizing, mind reading).
-2. **Aggregates them into the CFI** — a continuous cognitive-rigidity scalar in [0, 1],
-   not a diagnostic label.
-3. **Runs a Socratic reframing dialogue** (CBT downward-arrow technique) and evaluates
-   success as *CFI trending downward across turns* — a "reframing trajectory".
+1. **LLM (Layer 1)** — reads unstructured patient narrative, proposes a candidate
+   cognitive distortion + confidence.
+2. **Neural networks (Layer 1.5)** — score that confidence and predict temporal
+   dynamics: a Causal Transformer forecasts next-turn distortion escalation, and a
+   contrastively fine-tuned embedding model scores cognitive rigidity into the
+   **Cognitive Flexibility Index (CFI)**, a continuous scalar in [0, 1].
+3. **Knowledge graph (Layer 2)** — structures OCD-specific domain knowledge
+   (obsessions, symptoms, distortion patterns, treatment protocols) and answers
+   queries like "given contamination_fear + high_rigidity, what is first-line
+   treatment?"
+4. **Symbolic rules (Layer 3)** — verifies safety, clinical-guideline compliance, and
+   cross-session consistency before anything reaches a clinician or patient.
 
-> ⚠️ Research prototype for a graduate scholarship project. **Not a medical device.**
-> Outputs are never diagnoses. Labels are LLM weak-labeled (disclosed limitation).
+A fifth layer, the **Obsidian plugin (Layer 4)**, delivers recommendations inside a
+real clinical workflow and doubles as the research instrument for validating
+real-world performance.
+
+> Research prototype (doctoral project). **Not a medical device.** Outputs are never
+> framed as diagnosis or treatment. Distortion labels are LLM weak-labeled — disclosed
+> as a limitation, never claimed as clinical ground truth. Architecture is validated on
+> OCD as a case study; generalization to other disorders is future work.
+
+See **[docs/RESEARCH_PROPOSAL.md](docs/RESEARCH_PROPOSAL.md)** for the full doctoral
+proposal (motivation, 6 research questions, methodology, 4-year roadmap, expected
+publications) and **[CLAUDE.md](CLAUDE.md)** for a compact reference of the current
+architecture, status, and development conventions.
 
 ## Setup
 
@@ -43,7 +63,7 @@ python -m src.data_pipeline.download_datasets
 # 2. Consolidate + clean into one corpus
 python -m src.data_pipeline.preprocessing consolidate
 
-# 3. Weak-label with the 5-type taxonomy (start with --limit 100 to gauge cost)
+# 3. Weak-label with the CBT distortion taxonomy (start with --limit 100 to gauge cost)
 python -m src.data_pipeline.weak_labeling \
   --input data/processed/texts.jsonl --output data/processed/weak_labeled.jsonl --limit 100
 
@@ -68,6 +88,8 @@ alembic upgrade head
 # 9. Serve the API
 uvicorn src.api.main:app --reload
 ```
+
+Or run the pipeline end-to-end via `scripts/run_data_pipeline.sh`.
 
 ## API
 
@@ -97,7 +119,13 @@ pytest            # pure-logic tests run anywhere; model tests skip without enco
 
 ## Documentation
 
-- [CLAUDE.md](CLAUDE.md) — compact project context (architecture, constraints, conventions)
+- [CLAUDE.md](CLAUDE.md) — compact project context (architecture, status, constraints, conventions)
+- [docs/RESEARCH_PROPOSAL.md](docs/RESEARCH_PROPOSAL.md) — full doctoral proposal: research questions, methodology, timeline
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — component architecture and data flow overview
+- [docs/CFI_SPECIFICATION.md](docs/CFI_SPECIFICATION.md) — formal definition of the Cognitive Flexibility Index
+- [docs/FABLE_SPECIFICATION.md](docs/FABLE_SPECIFICATION.md) — formal spec of the reframing policy
 - [docs/TAXONOMY.md](docs/TAXONOMY.md) — distortion definitions + CFI weight rationale
 - [docs/LICENSING.md](docs/LICENSING.md) — verified license register for every external asset
-- [docs/DATA_QUALITY.md](docs/DATA_QUALITY.md) — weak-label spot-check results (filled during Phase 1)
+- [docs/DATA_QUALITY.md](docs/DATA_QUALITY.md) — weak-label spot-check results
+- [docs/VALIDATION.md](docs/VALIDATION.md) — training results (classifier F1, temporal AUROC, etc.)
+- [docs/NICHE_ANALYSIS.md](docs/NICHE_ANALYSIS.md) — why OCD as case study (vs panic, depression)

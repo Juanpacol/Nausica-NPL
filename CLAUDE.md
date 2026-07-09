@@ -122,12 +122,14 @@ Ready for real-world testing.
 - `configs/*.yaml` — Taxonomy, CFI weights, model names, dialogue backend switch
 - **Docs:**
   - `docs/RESEARCH_PROPOSAL.md` ⭐ — Full doctoral proposal (research questions, methodology, timeline)
+  - `docs/ARCHITECTURE.md` — Component architecture and data flow overview
   - `docs/CFI_SPECIFICATION.md` — Formal definition of cognitive flexibility metric
   - `docs/FABLE_SPECIFICATION.md` — Formal spec of policy formalization
   - `docs/TAXONOMY.md` — CBT distortion definitions (5-type)
   - `docs/VALIDATION.md` — Honest training results (classifier F1, temporal AUROC, etc.)
   - `docs/DATA_QUALITY.md` — Weak-label quality report (inter-annotator agreement)
   - `docs/NICHE_ANALYSIS.md` — Why OCD as case study (vs panic, depression)
+  - `docs/LICENSING.md` — Verified license registry for all dependencies
 
 ## Research Questions (From docs/RESEARCH_PROPOSAL.md)
 
