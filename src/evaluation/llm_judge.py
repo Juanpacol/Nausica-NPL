@@ -16,12 +16,11 @@ import argparse
 import json
 from pathlib import Path
 
+from src.utils.config import load_config
 from src.utils.llm_client import LLMClient
 from src.utils.logging_config import get_logger
 
 logger = get_logger(__name__)
-
-JUDGE_MODEL = "qwen3:8b"  # local via Ollama; switch provider in configs/data.yaml
 
 RUBRIC_SYSTEM = """You are an expert evaluator of CBT counseling dialogues. Score the \
 counselor's performance in the dialogue on three criteria, each an integer 1-5:
@@ -55,7 +54,8 @@ def run(input_path: Path, output_path: Path, limit: int | None = None) -> None:
     if limit:
         dialogues = dialogues[:limit]
 
-    client = LLMClient(model=JUDGE_MODEL)
+    judge_cfg = load_config("data")["judge"]
+    client = LLMClient(model=judge_cfg["model"], provider=judge_cfg.get("provider"))
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     totals = {"socratic_quality": 0, "non_directiveness": 0, "distortion_fit": 0}

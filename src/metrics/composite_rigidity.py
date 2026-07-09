@@ -52,3 +52,37 @@ def compute_composite_rigidity(
         "weights_used": {k: round(w, 4) for k, w in weights_used.items()},
         "signal_spread": round(max(present.values()) - min(present.values()), 4),
     }
+
+
+def calibrate_weights(signal_rows: list[dict[str, float]], outcomes: list[float]) -> dict[str, float]:
+    """Fit the blend weights against real outcomes — the documented upgrade path
+    for the heuristic 0.5/0.25/0.25 defaults (docs/VALIDATION.md).
+
+    signal_rows: per-observation signal values, e.g.
+        [{"classifier_cfi": 0.7, "temporal_predicted_cfi": 0.6, "embedding_rigidity": 0.5}, ...]
+        Every row must contain the same signal names.
+    outcomes: matching clinical outcome scores in [0, 1] (e.g. normalized PHQ-9).
+
+    Non-negative least squares keeps weights interpretable as a blend (no sign
+    flips); the result is renormalized to sum to 1 so it can drop straight into
+    configs/model.yaml `composite_rigidity.weights`. Not applied automatically —
+    calibration is an offline, reviewed step, not a runtime side effect.
+    """
+    import numpy as np
+    from scipy.optimize import nnls
+
+    if len(signal_rows) != len(outcomes):
+        raise ValueError("signal_rows and outcomes must have the same length")
+    if len(signal_rows) < 3:
+        raise ValueError("Need at least 3 observations to calibrate")
+    names = sorted(signal_rows[0])
+    if any(sorted(r) != names for r in signal_rows):
+        raise ValueError("Every row must contain the same signal names")
+
+    X = np.array([[r[n] for n in names] for r in signal_rows], dtype=float)
+    y = np.array(outcomes, dtype=float)
+    raw, _residual = nnls(X, y)
+    total = raw.sum()
+    if total <= 0:
+        raise ValueError("Calibration degenerated to all-zero weights — check the data")
+    return {name: round(float(w / total), 4) for name, w in zip(names, raw)}

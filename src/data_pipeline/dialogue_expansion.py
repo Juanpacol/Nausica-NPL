@@ -69,7 +69,7 @@ def run(limit: int | None = None) -> None:
         ds = ds.select(range(min(limit, len(ds))))
     logger.info("Expanding %d single-turn pairs into multi-turn dialogues", len(ds))
 
-    llm = LLMClient(model=exp_cfg["model"], max_tokens=4096)
+    llm = LLMClient(model=exp_cfg["model"], max_tokens=4096, provider=exp_cfg.get("provider"))
     written = 0
     with open(out_path, "w") as out:
         for i, row in enumerate(ds):

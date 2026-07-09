@@ -6,10 +6,18 @@
 backend: prompt
 
 prompt_backend:
-  model: qwen3:8b   # served locally by Ollama (see configs/data.yaml llm.provider)
+  # Local-first: free, no API key, no data leaves the machine. Upgrade path for
+  # max language quality: provider: anthropic, model: claude-fable-5 (needs
+  # ANTHROPIC_API_KEY; client turns would leave the machine — document it).
+  provider: ollama
+  model: qwen3:8b
   max_tokens: 400
   # Socratic style knobs
   max_questions_per_turn: 1
+  # Cognitive Fable (src/models/cognitive_fable.py): decide technique/tone BEFORE
+  # the LLM call and constrain generation with it. false = free-form prompting.
+  # Policy (heuristic|learned) selected in configs/model.yaml cognitive_fable.
+  use_fable: true
 
 lora_backend:
   base_model: meta-llama/Meta-Llama-3-8B-Instruct

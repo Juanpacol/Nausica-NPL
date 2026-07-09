@@ -64,6 +64,40 @@ composite_rigidity:
     temporal_predicted_cfi: 0.25
     embedding_rigidity: 0.25
 
+# Cognitive Fable (Phase 8) — formalized reframing policy: distortion state ->
+# CBT technique + tone. Two interchangeable policies (same principle as
+# dialogue.yaml backend switch):
+#   heuristic — deterministic config rules below (clinician-tunable, no training)
+#   learned   — FablePolicyNet trained on LLM-annotated synthetic dialogues;
+#               falls back to heuristic if the checkpoint is missing.
+cognitive_fable:
+  policy: heuristic
+  checkpoint: results/fable_policy/model.pt
+  techniques: [downward_arrow, evidence_exam, behavioral_exp, spectrum, socratic]
+  tones: [validating, gently_challenging, exploratory]
+  # Strongest detected distortion -> technique (CBT-canonical pairings)
+  technique_map:
+    catastrophizing: downward_arrow
+    overgeneralization: evidence_exam
+    mind_reading: behavioral_exp
+    all_or_nothing: spectrum
+    emotional_reasoning: socratic
+  fallback_technique: socratic
+  # Tone by severity of the strongest distortion (first matching band wins)
+  severity_bands:
+    - min_prob: 0.8
+      tone: validating
+    - min_prob: 0.5
+      tone: gently_challenging
+    - min_prob: 0.0
+      tone: exploratory
+  training:
+    hidden_dim: 32
+    learning_rate: 1.0e-3
+    epochs: 150
+    val_fraction: 0.2
+    seed: 42
+
 # Contrastive rigidity embedding (Phase 2) — MiniLM fine-tuned on (rigid, flexible)
 # pairs; rigidity_score = projection onto the rigid-flexible centroid axis.
 contrastive_embedding:

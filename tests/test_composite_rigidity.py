@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.metrics.composite_rigidity import compute_composite_rigidity
+from src.metrics.composite_rigidity import calibrate_weights, compute_composite_rigidity
 
 
 def test_all_signals_weighted_blend():
@@ -34,3 +34,41 @@ def test_out_of_range_rejected():
 
 def test_agreement_has_zero_spread():
     assert compute_composite_rigidity(0.5, 0.5, 0.5)["signal_spread"] == 0.0
+
+
+# ------------------------------------------------------------ calibrate_weights
+
+
+def test_calibration_recovers_dominant_signal():
+    """Outcome tracks classifier_cfi exactly -> it should get ~all the weight."""
+    rows = [
+        {"classifier_cfi": v, "embedding_rigidity": 0.5}
+        for v in (0.1, 0.3, 0.5, 0.7, 0.9)
+    ]
+    outcomes = [r["classifier_cfi"] for r in rows]
+    weights = calibrate_weights(rows, outcomes)
+    assert weights["classifier_cfi"] > 0.9
+    assert sum(weights.values()) == pytest.approx(1.0, abs=1e-3)
+
+
+def test_calibration_weights_are_nonnegative_and_normalized():
+    rows = [
+        {"classifier_cfi": 0.2, "temporal_predicted_cfi": 0.8},
+        {"classifier_cfi": 0.6, "temporal_predicted_cfi": 0.4},
+        {"classifier_cfi": 0.9, "temporal_predicted_cfi": 0.1},
+        {"classifier_cfi": 0.4, "temporal_predicted_cfi": 0.5},
+    ]
+    outcomes = [0.5, 0.5, 0.5, 0.45]
+    weights = calibrate_weights(rows, outcomes)
+    assert all(w >= 0 for w in weights.values())
+    assert sum(weights.values()) == pytest.approx(1.0, abs=1e-3)
+
+
+def test_calibration_input_validation():
+    rows = [{"a": 0.1}, {"a": 0.2}, {"a": 0.3}]
+    with pytest.raises(ValueError):
+        calibrate_weights(rows, [0.1, 0.2])  # length mismatch
+    with pytest.raises(ValueError):
+        calibrate_weights(rows[:2], [0.1, 0.2])  # too few observations
+    with pytest.raises(ValueError):
+        calibrate_weights([{"a": 0.1}, {"b": 0.2}, {"a": 0.3}], [0.1, 0.2, 0.3])

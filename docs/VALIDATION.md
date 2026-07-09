@@ -1,10 +1,11 @@
 # Validation Results — Phase 2 (Temporal Dynamics + Rigidity Embedding)
 
-Honest, unfiltered results from the first end-to-end training runs (2026-07-06).
-Everything below trains on **synthetic data** (49 LLM-generated dialogues via local
-qwen3:8b, ~4 client turns each) and the distortion classifier head was **untrained**
-at the time of these runs — both caveats propagate into every number here. These
-runs validate the *architecture and pipeline*, not clinical dynamics.
+Honest, unfiltered results. Phase 1 runs (2026-07-08): classifier fine-tuned on
+3000 weak-labeled texts. Everything below trains on **synthetic data** (49
+LLM-generated dialogues via local qwen3:8b, ~4 client turns each) — the classifier
+caveats are lifted, but the dialogue volume is still small and data is LLM-synthetic,
+not clinical. These runs validate the *architecture and pipeline*, not clinical
+dynamics.
 
 ## 1. Temporal CFI Transformer (`src/models/temporal_cfi.py`)
 
@@ -36,14 +37,15 @@ flexible) pairs; scored by projection onto the rigid→flexible centroid axis;
 |---|---|
 | Held-out ordering accuracy (fine-tuned) | 1.00 |
 | Held-out ordering accuracy (base model, no fine-tune) | 1.00 |
-| Pearson r vs classifier CFI (98 texts) | 0.705 (p < 0.0001) |
+| Pearson r vs classifier CFI (98 texts) | 0.474 (p < 0.0001) |
 
-**Honest reading:** the base MiniLM already orders every val pair correctly —
-a ceiling effect: with only 9 val pairs and synthetic reformulations that differ
-strongly in surface form, the task is too easy to show fine-tuning gains. The
-r = 0.705 correlation with the classifier CFI is a promising convergent-validity
-signal but carries the untrained-classifier caveat (`classifier_untrained: true`
-in metrics.json) and must be recomputed after the fine-tune.
+**Honest reading:** the base MiniLM still orders every val pair correctly (ceiling
+effect: 9 val pairs on synthetic reformulations). The r = 0.474 correlation with
+the now-trained classifier CFI shows convergent validity is weaker than the
+earlier untrained-classifier read (r = 0.705), which was inflated by the
+classifier flatness. The true correlation is moderate — suggests that the
+rigidity embedding is measuring a different axis than CFI (reasonable: rigidity
+axis is learned from semantic pairs, CFI is computed from distortion probs).
 
 Qualitative sanity check (live API, texts never seen in training):
 - "I always ruin everything and nobody will ever love me." → rigidity 0.349
@@ -67,9 +69,12 @@ classifier head is untrained.
 
 ## 3. What must happen before these numbers are paper-ready
 
-1. Fine-tune the distortion classifier (Phase 1 weak labeling at scale) — unblocks
-   real temporal dynamics and a meaningful CFI correlation.
-2. Scale synthetic dialogues (≥300) and/or collect real longitudinal journaling
-   data (the Obsidian plugin is the collection instrument).
-3. Larger val splits; report confidence intervals.
-4. Human spot-check of dialogue reframing arcs (protocol in docs/DATA_QUALITY.md).
+1. ✅ **DONE** Fine-tune the distortion classifier (Phase 1 weak labeling on 3000
+   texts via qwen3:8b) — unblocks real temporal dynamics and meaningful CFI signals.
+2. Scale synthetic dialogues (≥300, regenerate with better LLM if budget allows)
+   and/or collect real longitudinal journaling data (the Obsidian plugin is the
+   collection instrument).
+3. With trained classifier on real dialogue volume, re-run temporal_cfi training and
+   report whether it beats persistence (current: MAE tie @ 0.00172).
+4. Larger val splits; report confidence intervals.
+5. Human spot-check of dialogue reframing arcs (protocol in docs/DATA_QUALITY.md).

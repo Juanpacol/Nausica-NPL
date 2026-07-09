@@ -47,6 +47,14 @@ which flattens temporal dynamics; see docs/VALIDATION.md).
 - `src/models/archetypes.py` — config-driven distortion-combo → archetype mapping
   (configs/model.yaml `archetypes`); deliberately rule-based so clinicians can tune
   it without retraining.
+- `src/models/cognitive_fable.py` — formalized reframing policy (Phase 8):
+  FableState (distortions + turn) → FableAction (CBT technique + tone) decided
+  BEFORE the LLM call and injected as generation constraints (differentiator vs
+  prompt-only systems; spec: docs/FABLE_SPECIFICATION.md). Two policies via
+  configs/model.yaml `cognitive_fable.policy`: `heuristic` (config rules, like
+  archetypes) | `learned` (FablePolicyNet MLP on LLM-annotated synthetic
+  dialogues via `build_fable_policy_dataset.py`; falls back to heuristic if
+  untrained). NOT the same thing as Claude Fable, the Anthropic model.
 - `src/metrics/composite_rigidity.py` — weighted blend of the 3 rigidity signals;
   weights are HEURISTIC (configs/model.yaml), renormalizes over available signals,
   `signal_spread` flags disagreement instead of hiding it.
@@ -71,7 +79,11 @@ which flattens temporal dynamics; see docs/VALIDATION.md).
 - `configs/*.yaml` — taxonomy/weights (`data.yaml`), encoder hyperparams (`model.yaml`),
   dialogue backend switch (`dialogue.yaml`).
 - Docs: `docs/TAXONOMY.md` (label definitions), `docs/LICENSING.md` (verified license
-  table — read before adding any external asset).
+  table — read before adding any external asset), `docs/ARCHITECTURE.md` (data-flow
+  diagram + future-work register), `docs/CFI_SPECIFICATION.md` and
+  `docs/FABLE_SPECIFICATION.md` (formal specs for the two core contributions),
+  `docs/VALIDATION.md` (honest training results), `docs/DATA_QUALITY.md`
+  (weak-label spot-check evidence).
 
 ## Critical constraints
 - `mental/mental-roberta-base` is **CC-BY-NC-4.0, gated** — non-commercial only. Never
@@ -93,10 +105,14 @@ literature-review citations only. Verified details in `docs/LICENSING.md`.
 - Python 3.10+, `pyproject.toml` (`pip install -e ".[dev]"`).
 - Tests: `pytest` — pure-logic tests (CFI, preprocessing) must run without GPU, network,
   or API keys; anything needing the encoder/API is skipped via markers when unavailable.
-- LLM calls go through `src/utils/llm_client.py` (provider-agnostic: default
-  `ollama` = local qwen3:8b, free, no data leaves the machine; optional
-  `anthropic`) — do not instantiate SDK/HTTP clients elsewhere. Provider set in
-  configs/data.yaml `llm.provider` or env `NAUSICA_LLM_PROVIDER`.
+- LLM calls go through `src/utils/llm_client.py` (provider-agnostic) — do not
+  instantiate SDK/HTTP clients elsewhere. Provider is set PER TASK in configs
+  (`llm.provider` global default plus `provider:` keys in `prompt_backend`,
+  `dialogue_expansion`, `judge`). Current posture: ALL tasks local-first
+  (`ollama`/qwen3:8b, free, no key, no data leaves the machine). Documented
+  upgrade path: switch generation/evaluation tasks to `anthropic`/claude-fable-5
+  when budget allows — flag that those texts then leave the machine. Global
+  fallback overridable via env `NAUSICA_LLM_PROVIDER`.
 - Config over code: taxonomy labels, CFI weights, model names live in `configs/`, not
   hardcoded.
 - API keys only via `.env` (see `.env.example`); never committed, never logged.

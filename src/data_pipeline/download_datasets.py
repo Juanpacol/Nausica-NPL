@@ -4,8 +4,6 @@ Usage: python -m src.data_pipeline.download_datasets
 Datasets and licenses: docs/LICENSING.md. Raw data is gitignored — never commit it.
 """
 
-from pathlib import Path
-
 from datasets import load_dataset
 
 from src.utils.config import PROJECT_ROOT, load_config
@@ -25,7 +23,9 @@ def download_all() -> dict[str, str]:
             continue
         logger.info("Downloading %s (%s) ...", name, spec["hf_id"])
         try:
-            ds = load_dataset(spec["hf_id"])
+            # data_files pins a specific file when a repo mixes incompatible schemas
+            kwargs = {"data_files": spec["data_files"]} if "data_files" in spec else {}
+            ds = load_dataset(spec["hf_id"], **kwargs)
             target.mkdir(parents=True, exist_ok=True)
             ds.save_to_disk(str(target))
             sizes = {split: len(ds[split]) for split in ds}

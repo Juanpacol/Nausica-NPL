@@ -70,6 +70,9 @@ def run(input_path: Path, output_path: Path, limit: int | None = None) -> None:
     threshold = cfg["confidence_threshold"]
 
     records = [json.loads(line) for line in input_path.read_text().splitlines() if line.strip()]
+    # Deterministic shuffle so --limit N is a random sample, not a head slice —
+    # source datasets are ordered by category and a head slice would be one-class.
+    random.Random(42).shuffle(records)
     if limit:
         records = records[:limit]
     logger.info("Weak-labeling %d texts (threshold=%.2f)", len(records), threshold)

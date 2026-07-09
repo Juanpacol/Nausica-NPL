@@ -38,6 +38,33 @@ professional help or a local crisis line.
 
 Respond with the counselor's next message only — no meta-commentary."""
 
+# Rendered into the system prompt when a CognitiveFable action constrains the turn.
+# The Fable decides the strategy BEFORE the LLM call (auditable); the LLM only
+# executes it — this is the difference vs. free-form prompting (CBT-LLM style).
+FABLE_CONSTRAINT_TEMPLATE = """
+
+STRATEGY FOR THIS TURN (decided by the reframing policy — follow it):
+- Technique: {technique} — {technique_guidance}
+- Tone: {tone} — {tone_guidance}"""
+
+TECHNIQUE_GUIDANCE = {
+    "downward_arrow": "gently probe what the feared outcome would mean for them, "
+    "moving one step toward the underlying belief",
+    "evidence_exam": "invite them to examine the evidence for and against the belief, "
+    "including exceptions they may be discounting",
+    "behavioral_exp": "suggest a small, concrete way they could check this assumption "
+    "against reality",
+    "spectrum": "invite them to consider the middle ground between the extremes "
+    "they described, or partial versions of success",
+    "socratic": "ask one open, curious question that helps them explore the thought",
+}
+
+TONE_GUIDANCE = {
+    "validating": "lead with warm acknowledgement of the feeling before any question",
+    "gently_challenging": "kind but direct — it is okay to respectfully question the belief",
+    "exploratory": "neutral curiosity; no pressure toward any conclusion",
+}
+
 
 class ReframingBackend(ABC):
     @abstractmethod
@@ -58,12 +85,17 @@ class ReframingBackend(ABC):
 
 
 class PromptBackend(ReframingBackend):
-    def __init__(self):
+    def __init__(self, fable=None):
+        """fable: optional CognitiveFable. None (default) = free-form prompting,
+        identical to the pre-Fable behavior."""
         from src.utils.llm_client import LLMClient
 
         cfg = load_config("dialogue")["prompt_backend"]
-        self._client = LLMClient(model=cfg["model"], max_tokens=cfg["max_tokens"])
+        self._client = LLMClient(
+            model=cfg["model"], max_tokens=cfg["max_tokens"], provider=cfg.get("provider")
+        )
         self._max_questions = cfg["max_questions_per_turn"]
+        self._fable = fable
 
     def generate(self, distortion_profile, user_text, history, exemplars=None) -> str:
         profile_str = ", ".join(f"{k}={v:.2f}" for k, v in sorted(
@@ -71,6 +103,19 @@ class PromptBackend(ReframingBackend):
         system = SOCRATIC_SYSTEM_PROMPT.format(
             distortion_profile=profile_str, max_questions=self._max_questions
         )
+        if self._fable is not None:
+            from src.models.cognitive_fable import FableState
+
+            n_client_turns = sum(1 for t in history if t["role"] == "client") + 1
+            action = self._fable.select_action(
+                FableState(distortions=distortion_profile, session_turn=n_client_turns)
+            )
+            system += FABLE_CONSTRAINT_TEMPLATE.format(
+                technique=action.technique,
+                technique_guidance=TECHNIQUE_GUIDANCE[action.technique],
+                tone=action.tone,
+                tone_guidance=TONE_GUIDANCE[action.tone],
+            )
         if exemplars:
             shots = "\n\n".join(
                 f"[client]: {e['client_text']}\n[counselor]: {e['counselor_text']}"
@@ -104,9 +149,18 @@ class LoRABackend(ReframingBackend):
 
 def get_backend() -> ReframingBackend:
     """Instantiate the backend selected in configs/dialogue.yaml."""
-    choice = load_config("dialogue")["backend"]
-    backends = {"prompt": PromptBackend, "lora": LoRABackend}
-    if choice not in backends:
-        raise ValueError(f"Unknown dialogue backend {choice!r}; expected one of {list(backends)}")
-    logger.info("Reframing backend: %s", choice)
-    return backends[choice]()
+    cfg = load_config("dialogue")
+    choice = cfg["backend"]
+    if choice == "prompt":
+        fable = None
+        if cfg["prompt_backend"].get("use_fable", False):
+            from src.models.cognitive_fable import CognitiveFable
+
+            fable = CognitiveFable()
+        logger.info("Reframing backend: prompt (fable=%s)",
+                    fable.policy_name if fable else "off")
+        return PromptBackend(fable=fable)
+    if choice == "lora":
+        logger.info("Reframing backend: lora")
+        return LoRABackend()
+    raise ValueError(f"Unknown dialogue backend {choice!r}; expected one of ['prompt', 'lora']")

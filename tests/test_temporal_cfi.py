@@ -4,8 +4,12 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
-from src.models.temporal_cfi import TemporalCFITransformer, _collate, _direction_accuracy
-from src.utils.config import taxonomy_labels
+from src.models.temporal_cfi import (  # noqa: E402 — must follow importorskip
+    TemporalCFITransformer,
+    _collate,
+    _direction_accuracy,
+)
+from src.utils.config import taxonomy_labels  # noqa: E402
 
 N = len(taxonomy_labels())
 

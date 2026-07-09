@@ -167,7 +167,15 @@ def reframe(
         pass
 
     history = [{"role": t.role, "text": t.text} for t in session.turns]
-    reply = _dialogue_backend().generate(distortions, req.text, history, exemplars)
+    try:
+        reply = _dialogue_backend().generate(distortions, req.text, history, exemplars)
+    except Exception as e:  # noqa: BLE001 — LLM backend down/misconfigured, not a 500
+        logger.error("Reframing backend failed: %s", e)
+        raise HTTPException(
+            status_code=503,
+            detail="Reframing backend unavailable — check the LLM provider "
+            "(Ollama server / ANTHROPIC_API_KEY) and configs/dialogue.yaml.",
+        )
 
     db.add(Turn(session_id=session.id, turn_idx=next_idx, role="client",
                 text=req.text, distortions=distortions, cfi=cfi,
@@ -315,9 +323,14 @@ async def analyze_audio(
     import tempfile
     from pathlib import Path as _Path
 
+    MAX_AUDIO_BYTES = 25 * 1024 * 1024  # journaling clips, not podcasts — avoid OOM
+    payload = await file.read(MAX_AUDIO_BYTES + 1)
+    if len(payload) > MAX_AUDIO_BYTES:
+        raise HTTPException(status_code=413, detail="Audio file exceeds the 25MB limit")
+
     suffix = _Path(file.filename or "audio.wav").suffix or ".wav"
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=True) as tmp:
-        tmp.write(await file.read())
+        tmp.write(payload)
         tmp.flush()
         segments, _info = model.transcribe(tmp.name)
         text = " ".join(s.text.strip() for s in segments).strip()

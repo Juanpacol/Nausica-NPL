@@ -6,6 +6,9 @@ datasets:
     local_dir: data/raw/angst
   mental_health_classification:
     hf_id: ourafla/Mental-Health_Text-Classification_Dataset
+    # Repo mixes CSVs with different schemas; this one is the raw text corpus
+    # (Unique_ID, text, status) — the feature-engineered CSV breaks combined loading.
+    data_files: mental_heath_unbanlanced.csv
     local_dir: data/raw/mental_health_classification
   counseling_conversations:
     hf_id: Amod/mental_health_counseling_conversations
@@ -45,9 +48,19 @@ weak_labeling:
   spot_check_fraction: 0.10
 
 dialogue_expansion:
+  # Local-first (free). Upgrade path: provider: anthropic, model: claude-fable-5
+  # — synthetic dialogue quality feeds three downstream datasets (temporal,
+  # contrastive pairs, fable policy), so it's the first place to spend budget.
+  provider: ollama
   model: qwen3:8b
   min_turns: 5
   max_turns: 7
+
+# LLM-as-judge for dialogue quality (src/evaluation/llm_judge.py).
+# Upgrade path: anthropic / claude-fable-5 for the paper's final eval numbers.
+judge:
+  provider: ollama
+  model: qwen3:8b
 
 splits:
   train: 0.70
