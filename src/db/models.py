@@ -141,3 +141,43 @@ class NoteAnalysis(Base):
     rigidity_score: Mapped[float | None] = mapped_column(Float, nullable=True)
     archetype: Mapped[str | None] = mapped_column(String(50), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class Recommendation(Base):
+    """Layer 4 (Phase 10) — a held VerifiedRecommendation plus its clinician
+    approval decision. Backs the `/recommend` and
+    `/turns/{turn_id}/clinician_approval` endpoints (src/api/main.py) and
+    `RecommendationModal` (obsidian-plugin/src/RecommendationModal.ts).
+
+    `clinician_approved` starts `None` (pending — nothing shown to the
+    patient) and is set exactly once by `submit_clinician_approval`; this
+    row is the structural enforcement of the Layer 4 safety gate described
+    in CLAUDE.md and docs/IMPLEMENTATION_PLAN.md §3/§7, not a convention.
+    Schema only — no query/mutation logic here (Phase 10 fills that in).
+    """
+
+    __tablename__ = "recommendations"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    session_id: Mapped[str] = mapped_column(ForeignKey("sessions.id"), index=True)
+    turn_id: Mapped[str] = mapped_column(ForeignKey("turns.id"), index=True)
+
+    # Full VerifiedRecommendation (src/rules_engine/verification.py) as JSON:
+    # recommendation, reasoning_chain, safety_flags, confidence.
+    recommendation_json: Mapped[dict] = mapped_column(JSON)
+
+    # Pending until a clinician acts; None distinguishes "not yet reviewed"
+    # from an explicit reject (False) — never defaults to True.
+    clinician_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    clinician_approved: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    clinician_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    alternative_recommendation: Mapped[str | None] = mapped_column(Text, nullable=True)
+    approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    # Patient-side outcome rating (distinct from Turn.clinician_feedback_* in
+    # Phase 7, which rates the reframe reply, not the recommendation).
+    patient_feedback_rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now)

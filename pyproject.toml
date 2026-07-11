@@ -24,6 +24,9 @@ dependencies = [
     "fastapi>=0.110",
     "uvicorn>=0.29",
     "python-dotenv>=1.0",
+    # Layer 2 (Phase 9): in-memory OCD knowledge graph — see "Stack decisions"
+    # in docs/IMPLEMENTATION_PLAN.md §3 (networkx over Neo4j at ~40 nodes).
+    "networkx>=3.0",
 ]
 
 [project.optional-dependencies]

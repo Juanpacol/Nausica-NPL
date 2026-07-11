@@ -581,6 +581,130 @@ def org_patients(
     return {"patients": sorted(out, key=lambda p: -(p["latest_cfi"] or 0))}
 
 
+# --------------------------------- Phases 8-10: neuro-symbolic recommendation
+#
+# Layer 1 (LLM) -> Layer 1.5 (NN confidence/rigidity) -> Layer 2 (KG) ->
+# Layer 3 (Rules) -> VerifiedRecommendation, held for the Layer 4 clinician
+# approval gate before any patient sees it (docs/IMPLEMENTATION_PLAN.md §3-4).
+# SKELETONS ONLY: signatures + docstrings, no orchestration yet — the bodies
+# raise NotImplementedError until src/models/reasoning_pipeline.py (Phase 9)
+# and src/rules_engine/ (Phase 8) are filled in.
+
+
+class RecommendRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=8000)
+    session_history: list[dict] = Field(default_factory=list)
+
+
+class VerifiedRecommendationResponse(BaseModel):
+    recommendation: str
+    reasoning_chain: list[str]
+    safety_flags: list[str]
+    confidence: float
+    turn_id: str
+    disclaimer: str = "Research prototype output — not a clinical diagnosis."
+
+
+class ClinicianApprovalRequest(BaseModel):
+    approved: bool
+    notes: str = Field(default="", max_length=4000)
+    alternative_recommendation: str | None = Field(default=None, max_length=4000)
+
+
+@app.post("/recommend", response_model=VerifiedRecommendationResponse)
+def recommend(
+    req: RecommendRequest,
+    user: User = Depends(get_current_user),
+    db: OrmSession = Depends(get_db),
+):
+    """Layer 4 entry point: run patient text through Layers 1-3 and return a
+    verified recommendation — HELD pending clinician approval.
+
+    Pipeline (src/models/reasoning_pipeline.py, Phase 9):
+        1. Layer 1 (LLM): `_dialogue_backend()` / classifier -> candidate distortion.
+        2. Layer 1.5 (NN): `_temporal_model()` + `_rigidity_embedder()` ->
+           confidence + rigidity (never blended together — see
+           docs/IMPLEMENTATION_PLAN.md §3, Layer 1.5 ensemble correction).
+        3. Layer 2 (KG): `src.knowledge_graph.query_treatment` -> ERP protocol.
+        4. Layer 3 (Rules): `src.rules_engine.verify_recommendation` ->
+           VerifiedRecommendation with reasoning_chain + safety_flags.
+        5. Persist as a `recommendations` row (Phase 10 migration) with
+           `clinician_approved = False`; return it to the caller unchanged.
+
+    The caller (Obsidian plugin) must NOT display `recommendation` or
+    `reasoning_chain` to the patient — only to the clinician, via
+    `RecommendationModal` — until `/turns/{turn_id}/clinician_approval`
+    records approval.
+    """
+    raise NotImplementedError(
+        "recommend() needs src.rules_engine (Phase 8) and "
+        "src.models.reasoning_pipeline (Phase 9)."
+    )
+
+
+@app.post("/turns/{turn_id}/clinician_approval")
+def submit_clinician_approval(
+    turn_id: str,
+    req: ClinicianApprovalRequest,
+    user: User = Depends(get_current_user),
+    db: OrmSession = Depends(get_db),
+):
+    """Clinician gate: approve, reject, or replace a held recommendation.
+
+    Requires `require_clinician_of` against the recommendation's patient
+    (same authorization pattern as `turn_feedback`). After this call:
+    - `approved=True`, no `alternative_recommendation`: patient sees the
+      original `recommendation` + `reasoning_chain`.
+    - `approved=True` with `alternative_recommendation`: patient sees the
+      alternative instead.
+    - `approved=False`: patient sees generic psychoeducation, never the
+      held recommendation.
+
+    This is the structural enforcement of "clinician support only"
+    described in CLAUDE.md's Layer 4 section and
+    docs/IMPLEMENTATION_PLAN.md §3/§7 — not aspirational.
+    """
+    raise NotImplementedError("Needs the Phase 10 `recommendations` table (see alembic/versions/).")
+
+
+@app.get("/turns/{turn_id}/approval_status")
+def get_approval_status(
+    turn_id: str,
+    user: User = Depends(get_current_user),
+    db: OrmSession = Depends(get_db),
+):
+    """Poll target for the plugin: has a clinician approved this turn's
+    held recommendation yet? Used before rendering anything to the patient."""
+    raise NotImplementedError("Needs the Phase 10 `recommendations` table (see alembic/versions/).")
+
+
+@app.get("/kg/query")
+def kg_query(
+    obsession: str,
+    distortion: str,
+    rigidity: float = 0.5,
+    user: User = Depends(get_current_user),
+):
+    """Debug / clinical endpoint: query the Layer 2 knowledge graph directly,
+    bypassing Layers 1 and 3. Returns the same shape as
+    `src.knowledge_graph.query_treatment`: protocol, steps, contraindications,
+    severity_recommendation. Useful for Phase 6 expert review and Phase 9
+    integration tests without needing a full LLM round-trip."""
+    raise NotImplementedError("Needs src.knowledge_graph (Phase 9).")
+
+
+@app.get("/kg/explain_path")
+def kg_explain_path(
+    from_node: str,
+    to_node: str,
+    user: User = Depends(get_current_user),
+):
+    """Debug / clinical endpoint: return the Layer 2 reasoning chain between
+    two node ids, as (from, edge_type, to) tuples — the same explanation
+    `verify_recommendation` folds into `VerifiedRecommendation.reasoning_chain`."""
+    raise NotImplementedError("Needs src.knowledge_graph (Phase 9).")
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}

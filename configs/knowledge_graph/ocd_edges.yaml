@@ -1,0 +1,40 @@
+# OCD Knowledge Graph — edges (Phase 6 content, SHAPE ONLY).
+#
+# Hand-curated alongside ocd_nodes.yaml (same expert, same sign-off gate).
+# `type` must be a value of src.knowledge_graph.schema.EdgeType; `from`/`to`
+# must reference ids defined in ocd_nodes.yaml. `strength` is the curator's
+# confidence in the relationship (see schema.Edge), never a learned weight.
+#
+# Target size: ~50 edges. The rows below are placeholder examples tracing
+# one obsession -> protocol path end to end — not clinically reviewed content.
+# DO NOT use these values in any query_treatment path until Phase 6 sign-off.
+
+edges:
+  - from: "obsession_contamination"
+    to: "symptom_avoidance_washing"
+    type: "triggers"
+    strength: 0.9
+
+  - from: "symptom_avoidance_washing"
+    to: "distortion_catastrophizing"
+    type: "manifests_as"
+    strength: 0.7
+
+  - from: "distortion_catastrophizing"
+    to: "technique_graduated_exposure"
+    type: "addressed_by"
+    strength: 0.85
+
+  - from: "technique_graduated_exposure"
+    to: "erp_protocol_contamination_graduated"
+    type: "steps_in"
+    strength: 1.0
+
+  - from: "patient_state_high_suicidal_risk"
+    to: "erp_protocol_contamination_graduated"
+    type: "contraindicates"
+    strength: 1.0
+    metadata:
+      action: "escalate"  # see configs/rules.yaml safety rules for enforcement
+
+  # ... ~50 total edges per Phase 6 expert sign-off

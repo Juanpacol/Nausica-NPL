@@ -1,0 +1,88 @@
+# Symbolic verification rules (Phase 8, SHAPE ONLY) — Layer 3.
+#
+# Loaded by src/rules_engine/engine.py::RuleSet.from_yaml. `type` in each
+# condition must be a value of src.rules_engine.engine.ConditionType;
+# `action.type` is one of "approve" | "flag" | "suggest_alternative" |
+# "escalate". Rules run in `priority` order, descending — safety rules
+# should always outrank clinical-guideline rules, which outrank
+# consistency rules (docs/IMPLEMENTATION_PLAN.md §3, Layer 3).
+#
+# Target size: ~50 rules across three categories (safety, clinical
+# guideline, consistency). The rows below are placeholder examples
+# illustrating the shape, not a reviewed clinical rule set — DO NOT treat
+# these as ready for `verify_recommendation` until Phase 8 sign-off.
+
+rules:
+  # ------------------------------------------------------------- safety
+  - id: "safety_suicidality_contraindication"
+    name: "Contraindicate exposure if suicidality risk"
+    priority: 100
+    conditions:
+      - type: "patient_state"
+        field: "patient_state.suicidal_risk"
+        operator: ">"
+        value: 0.7
+    action:
+      type: "escalate"
+      params:
+        level: "clinical_review"
+        message: "High suicidality risk detected. Refer to crisis team; do not auto-display."
+    description: "Highest-priority safety gate — see docs/IMPLEMENTATION_PLAN.md §7."
+
+  - id: "safety_active_psychosis_contraindication"
+    name: "Contraindicate ERP during active psychosis"
+    priority: 100
+    conditions:
+      - type: "patient_state"
+        field: "patient_state.active_psychosis"
+        operator: "=="
+        value: true
+    action:
+      type: "flag"
+      params:
+        level: "clinical_review"
+        message: "Active psychosis contraindicates standard ERP protocols."
+
+  # ------------------------------------------------------- clinical guideline
+  - id: "guideline_erp_protocol_adherence"
+    name: "Ensure ERP protocol matches DSM-5 guideline"
+    priority: 50
+    conditions:
+      - type: "confidence_above"
+        field: "confidence"
+        operator: ">"
+        value: 0.6
+    action:
+      type: "approve"
+      params:
+        message: "ERP protocol verified against guideline checklist (Phase 6 expert sign-off)."
+
+  - id: "guideline_low_confidence_review"
+    name: "Force clinician review below the confidence floor"
+    priority: 90
+    conditions:
+      - type: "confidence_above"
+        field: "confidence"
+        operator: "<"
+        value: 0.4
+    action:
+      type: "flag"
+      params:
+        level: "clinician_review"
+        message: "Layer 1.5 ensemble confidence below floor — mandatory review before display."
+
+  # ------------------------------------------------------------ consistency
+  - id: "consistency_session_contradiction"
+    name: "Flag contradiction with prior-session recommendation"
+    priority: 40
+    conditions:
+      - type: "session_consistency"
+        field: "session_history.contradicts_previous"
+        operator: "=="
+        value: true
+    action:
+      type: "suggest_alternative"
+      params:
+        message: "Recommendation contradicts a prior turn in this session — review before display."
+
+  # ... ~50 total rules per Phase 8 sign-off

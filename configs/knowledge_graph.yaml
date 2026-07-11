@@ -1,0 +1,15 @@
+# Knowledge Graph (Phase 9) — Layer 2 of the neuro-symbolic architecture.
+# References Phase 6 expert-curated content; this file holds no domain
+# content itself (same split as configs/model.yaml referencing
+# results/*/model.pt checkpoints rather than embedding weights inline).
+
+# Paths are relative to PROJECT_ROOT (src/utils/config.py).
+nodes_spec: configs/knowledge_graph/ocd_nodes.yaml
+edges_spec: configs/knowledge_graph/ocd_edges.yaml
+
+# In-memory graph is rebuilt from YAML on first use and cached for the
+# process lifetime (same lru_cache(maxsize=1) pattern as
+# src/api/main.py::_classifier). These settings are for a future on-disk
+# cache if graph-build cost ever stops being negligible at ~40 nodes.
+use_cache: true
+cache_ttl_seconds: 3600
