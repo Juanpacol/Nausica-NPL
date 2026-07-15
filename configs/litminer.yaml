@@ -1,0 +1,473 @@
+# litminer gap registry — literature we still need to source or verify.
+#
+# Derived from the gap audit of docs/RESEARCH_FOCUS.md (2026-07-13).
+# Each gap:
+#   id:       stable slug (used with --gap)
+#   priority: critical | high | medium | low
+#   need:     what evidence/citation the research document is missing
+#   queries:  search strings sent to every enabled source
+#   resolve:  known-but-partial identifiers to verify directly
+#             (type: arxiv | doi)
+#
+# Run:  python -m src.litminer            (all gaps)
+#       python -m src.litminer --list     (show this registry)
+#       python -m src.litminer --gap hybrid-llm-kg-systems
+
+gaps:
+  # ------------------------------------------------------------------
+  # CRITICAL — cited in RESEARCH_FOCUS.md Part E without full references
+  # ------------------------------------------------------------------
+  - id: hybrid-llm-kg-systems
+    title: "MindMap / medIKAL / CliCARE / MedRAG — full citations"
+    priority: critical
+    need: >
+      Part E names these four LLM+KG hybrids as the systems whose
+      sequential-integration flaw Nausica corrects, but none has a full
+      reference (authors, venue, DOI). Without them the core gap claim
+      is unverifiable.
+    queries:
+      - "MindMap knowledge graph prompting large language models"
+      - "medIKAL integrating knowledge graphs LLM clinical diagnosis"
+      - "CliCARE clinical records knowledge graph large language model"
+      - "MedRAG retrieval augmented generation medical knowledge graph"
+
+  - id: trustmh-bench
+    title: "TrustMH-Bench 2025 — verify and complete the citation"
+    priority: critical
+    need: >
+      Cited as arXiv:2603.03047 with no authors. It is the linchpin for
+      "generic medical LLM competence does not transfer to psychiatric
+      reasoning" and for choosing OCD. Verify the identifier and get the
+      full author list; if the ID is wrong, find the real paper.
+    resolve:
+      - {type: arxiv, id: "2603.03047"}
+    queries:
+      - "benchmark trustworthiness large language models mental health"
+      - "evaluating LLM safety mental health anxiety depression OCD benchmark"
+
+  # ------------------------------------------------------------------
+  # HIGH — claims that need literature grounding before Phase 11
+  # ------------------------------------------------------------------
+  - id: cognitive-rigidity-ocd
+    title: "Cognitive rigidity / flexibility measurement in OCD"
+    priority: high
+    need: >
+      Layer 1.5's rigidity embedding and the CFI metric have no cited
+      precedent from the OCD neuropsychology literature. Need canonical
+      work on cognitive inflexibility / set-shifting in OCD so CFI can be
+      positioned against established constructs (and validated against
+      them in Q3).
+    queries:
+      - "cognitive flexibility set-shifting deficits obsessive-compulsive disorder"
+      - "cognitive inflexibility obsessive-compulsive disorder meta-analysis"
+      - "executive function set shifting OCD neuropsychology review"
+
+  - id: ocd-epidemiology
+    title: "OCD prevalence + diagnostic delay (Section 2 claims)"
+    priority: high
+    need: >
+      "1-2% global prevalence" and "8-17 year average diagnostic delay"
+      are asserted without sources. Need the epidemiological studies
+      behind both numbers.
+    queries:
+      - "epidemiology obsessive-compulsive disorder prevalence national comorbidity survey"
+      - "duration untreated illness obsessive-compulsive disorder treatment delay"
+      - "obsessive-compulsive disorder time to diagnosis treatment gap"
+
+  - id: confidence-calibration
+    title: "Confidence calibration (ECE) methodology for Q3"
+    priority: high
+    need: >
+      Q3's success criterion is ECE < 0.10, but no calibration literature
+      is cited anywhere. Need the canonical calibration references
+      (temperature scaling, ECE definition) plus clinical-ML calibration
+      precedents.
+    queries:
+      - "calibration modern neural networks expected calibration error"
+      - "confidence calibration clinical machine learning healthcare"
+      - "uncertainty quantification large language models clinical"
+
+  - id: digital-mental-health-privacy
+    title: "Privacy / regulatory grounding for Layer 4 (Obsidian, local-first)"
+    priority: high
+    need: >
+      The local-first design claim has no regulatory or academic backing.
+      Need literature on privacy and data-protection requirements for
+      digital mental health tools (HIPAA/GDPR analyses, on-device
+      processing precedents) to justify the Obsidian local-first design.
+    queries:
+      - "privacy digital mental health apps data protection review"
+      - "GDPR HIPAA compliance mental health applications"
+      - "local on-device processing privacy clinical language models"
+
+  - id: ema-ocd
+    title: "Ecological momentary assessment / intensive sampling in OCD"
+    priority: high
+    need: >
+      Part B's escalation-prediction precedents (Su, Meyer, Kadirvelu)
+      are not OCD-specific. Layer 4 assumes continuous narrative capture
+      from OCD patients is feasible and informative — need EMA/experience
+      sampling studies in OCD to support that assumption.
+    queries:
+      - "ecological momentary assessment obsessive-compulsive disorder"
+      - "experience sampling obsessive-compulsive symptoms daily monitoring"
+      - "smartphone digital phenotyping OCD symptom monitoring"
+
+  # ------------------------------------------------------------------
+  # MEDIUM — strengthen design rationale / verify partial identifiers
+  # ------------------------------------------------------------------
+  - id: trustworthiness-survey
+    title: "Healthcare LLM trustworthiness survey — verify arXiv:2502.15871"
+    priority: medium
+    need: >
+      Cited with an arXiv ID but no authors. Verify and complete.
+    resolve:
+      - {type: arxiv, id: "2502.15871"}
+    queries:
+      - "survey trustworthiness large language models healthcare"
+
+  - id: pre-generation-policy
+    title: "Constitutional AI lineage for Fable (pre-generation policy)"
+    priority: medium
+    need: >
+      Fable is presented as novel but its lineage (Constitutional AI,
+      rule-conditioned generation) is only indirectly cited via
+      Henneking 2025. Need Bai et al.'s Constitutional AI paper and any
+      work on policy-constrained generation in clinical/safety domains,
+      so Fable is positioned as an instantiation, not an unmoored idea.
+    resolve:
+      - {type: arxiv, id: "2212.08073"}   # Bai et al., Constitutional AI (to verify)
+      - {type: arxiv, id: "2501.17112"}   # Henneking 2025 (cited, verify)
+    queries:
+      - "constitutional AI harmlessness from AI feedback"
+      - "policy constrained text generation safety rules language model"
+
+  - id: ocd-treatment-guidelines
+    title: "Which ERP/CBT guideline does Layer 2/3 encode?"
+    priority: medium
+    need: >
+      "ERP guidelines are explicit and published" — true, but the specific
+      guideline document Nausica encodes must be cited (APA practice
+      guideline, NICE CG31, IOCDF). Also need the ERP efficacy
+      meta-analysis behind "first-line treatment".
+    queries:
+      - "practice guideline treatment obsessive-compulsive disorder exposure response prevention"
+      - "NICE guideline obsessive-compulsive disorder CG31"
+      - "meta-analysis exposure response prevention OCD efficacy"
+
+  - id: clinical-language-models
+    title: "Domain-adapted language model precedents (Layer 1 / classifier)"
+    priority: medium
+    need: >
+      The distortion classifier fine-tunes mental-roberta-base, and
+      RESEARCH_FOCUS.md never cites the domain-adaptation lineage
+      (MentalBERT, ClinicalBERT, domain-adaptive pretraining). Needed to
+      ground Layer 1 model choices.
+    queries:
+      - "MentalBERT pretrained language models mental healthcare"
+      - "publicly available clinical BERT embeddings"
+      - "domain-adaptive pretraining language models don't stop pretraining"
+
+  # ------------------------------------------------------------------
+  # LOW — attribution hygiene
+  # ------------------------------------------------------------------
+  - id: cbt-distortion-taxonomy
+    title: "Source attribution for the 5-type CBT distortion taxonomy"
+    priority: low
+    need: >
+      docs/TAXONOMY.md uses a 5-type distortion taxonomy attributed
+      loosely to "CBT-LLM". Need the original clinical lineage (Beck's
+      cognitive distortions, Burns' feeling-good taxonomy) plus the
+      CBT-LLM paper itself for the 5-type reduction.
+    queries:
+      - "CBT-LLM Chinese large language model cognitive behavioral therapy questions"
+      - "cognitive distortions detection classification mental health text"
+      - "Beck cognitive therapy emotional disorders distortions"
+
+  # ========== CRITICAL GAPS FROM LITERATURE AUDIT ==========
+
+  - id: exact-benchmark-numbers
+    title: "Verify exact performance numbers cited in Part C"
+    priority: critical
+    need: >
+      Part C cites specific statistics: "13.3% performance drop in
+      high-risk clinical scenarios", "safety scores (54.7%)", "general
+      performance (62.3%)", "hallucination rate ≈1.47%". These must come
+      from Nature npj Digital Medicine 2025a/2025b. Find the exact papers
+      and verify numbers.
+    queries:
+      - "large language models clinical safety hallucination rate benchmark 2025"
+      - "LLM performance drop high-risk clinical scenarios 13.3%"
+      - "medical text summarization hallucination 1.47% benchmark"
+      - "Nature npj Digital Medicine LLM safety 54.7% 62.3%"
+
+  - id: rouge-l-constrained-decoding
+    title: "NeuroStructural Decoding ROUGE-L improvement (43.3→44.1)"
+    priority: critical
+    need: >
+      Part E claims "SuMe: ROUGE-L 43.3→44.1" from Bastan et al.
+      NeuroStructural Decoding ACL 2023. Verify exact numbers and that
+      this is the biomedical mechanism-generation task cited.
+    queries:
+      - "NeuroStructural Decoding ROUGE biomedical SuMe mechanism"
+      - "Bastan constrained neural text generation ACL 2023"
+      - "SuMe biomedical mechanism generation ROUGE metric"
+
+  - id: contrastive-learning-origin
+    title: "Triplet margin loss / contrastive learning foundational paper"
+    priority: critical
+    need: >
+      Layer 1.5 uses contrastive pretraining (triplet margin loss) but
+      no source is cited for the technique itself. Need Schroff et al.
+      2015 FaceNet or equivalent foundational work.
+    queries:
+      - "triplet margin loss contrastive learning Schroff FaceNet"
+      - "contrastive learning metric learning embedding space"
+      - "triplet loss face recognition deep learning"
+
+  - id: minilm-paper
+    title: "MiniLM pretrained language model paper"
+    priority: critical
+    need: >
+      Layer 1.5 uses MiniLM fine-tuned contrastively but paper not cited.
+      Need Wang et al. 2020 or equivalent MiniLM source.
+    queries:
+      - "MiniLM deep self-attention distillation Wang 2020"
+      - "MiniLM pretrained language model sentence embeddings"
+
+  - id: system-usability-scale
+    title: "SUS (System Usability Scale) — Brooke 1996"
+    priority: high
+    need: >
+      Section 3 (Q5) mentions "SUS score" for usability evaluation but
+      does not cite the foundational scale definition.
+    queries:
+      - "System Usability Scale Brooke 1996"
+      - "SUS scale usability assessment"
+
+  - id: calibration-threshold-literature
+    title: "ECE < 0.10 threshold — literature precedent"
+    priority: high
+    need: >
+      Q3 success criterion is "ECE < 0.10" but no source justifies this
+      threshold. Guo et al. 2017 defines ECE; need precedent for why
+      0.10 is the target (not 0.15 or 0.05).
+    queries:
+      - "Expected Calibration Error ECE threshold clinical medicine"
+      - "confidence calibration neural networks 0.10 benchmark"
+      - "Guo calibration modern neural networks ECE"
+
+  - id: escalation-auroc-justification
+    title: "AUROC > 0.75 threshold for escalation prediction"
+    priority: high
+    need: >
+      Q3 targets "escalation AUROC > 0.75". Su et al. 2020 achieves
+      0.81-0.86; Kadirvelu 2026 achieves 0.77. Is 0.75 conservative or
+      literature-grounded? Need justification.
+    queries:
+      - "suicide risk prediction AUROC threshold clinical psychiatry"
+      - "escalation prediction psychiatric ROC AUC benchmark"
+      - "clinical decision support AUROC performance target"
+
+  - id: ocd-prevalence-epidemiology
+    title: "OCD global prevalence: exact sources for 1-2% claim"
+    priority: high
+    need: >
+      Section 2 asserts "1–2% global prevalence" but Ruscio et al. 2008
+      reports 1.2% US lifetime (NCS-R). Find global meta-analysis or
+      confirm US-centric citation is sufficient.
+    queries:
+      - "obsessive compulsive disorder global prevalence epidemiology meta-analysis"
+      - "OCD lifetime prevalence international WHO estimate"
+      - "Ruscio NCS-R OCD prevalence 2008"
+
+  - id: ocd-diagnostic-delay
+    title: "OCD diagnostic delay: 8–17 years — source verification"
+    priority: high
+    need: >
+      Section 2 claims "8–17 year average diagnostic delay" but unclear
+      if this is from Marcks 2011, Albert 2019, or synthesis. Verify
+      exact source and numbers.
+    queries:
+      - "obsessive compulsive disorder time to diagnosis duration untreated illness"
+      - "OCD treatment delay diagnostic lag study"
+      - "Albert duration untreated illness OCD antipsychotics"
+
+  - id: erp-guideline-standards
+    title: "ERP/CBT treatment guidelines — which standard to encode?"
+    priority: high
+    need: >
+      Layer 2/3 will encode an ERP/CBT guideline but no specific
+      guideline is named (IOCDF, APA, NICE CG31, Canadian?). Literature
+      review of current standard-of-care guideline.
+    queries:
+      - "IOCDF clinical handbook obsessive compulsive disorder ERP"
+      - "APA practice guideline OCD exposure response prevention"
+      - "NICE CG31 OCD treatment guidelines"
+      - "Canadian clinical practice guidelines OCD anxiety disorders"
+
+  - id: arden-syntax-production
+    title: "Arden Syntax 25+ years in production — verify claim"
+    priority: medium
+    need: >
+      Part A claims "25+ years in production clinical decision support
+      systems" but this needs verification that Seitinger et al. 2014
+      citation supports it.
+    queries:
+      - "Arden Syntax clinical decision support production deployment"
+      - "medical logic modules 25 years healthcare"
+
+  # ========== EXTENDED SEARCH FOR MAXIMUM COVERAGE ==========
+
+  - id: guo-calibration-2017
+    title: "Guo et al. 2017 — On Calibration of Modern Neural Networks"
+    priority: critical
+    need: >
+      Canonical paper defining ECE (Expected Calibration Error). Needed
+      to ground Q3's "ECE < 0.10" success criterion. Must find exact
+      paper and methodology.
+    queries:
+      - "Guo calibration modern neural networks ICML 2017"
+      - "expected calibration error ECE temperature scaling"
+      - "On Calibration of Modern Neural Networks Guo"
+
+  - id: wang-minilm-2020
+    title: "Wang et al. 2020 — MiniLM pretrained language model"
+    priority: critical
+    need: >
+      Layer 1.5 baseline uses MiniLM. Need the original paper to cite
+      the model architecture and training procedure.
+    queries:
+      - "MiniLM deep self-attention distillation Wang 2020"
+      - "MiniLM sentence embeddings pretrained model"
+      - "Wang MiniLM-L6-H384 language model ICLR"
+
+  - id: brooke-sus-1996
+    title: "Brooke 1996 — System Usability Scale (SUS)"
+    priority: high
+    need: >
+      Q5 evaluates usability via SUS score. Need the original Brooke
+      paper that defines the 10-item scale.
+    queries:
+      - "Brooke SUS System Usability Scale 1996"
+      - "System Usability Scale original paper"
+
+  - id: latam-mental-health-gap
+    title: "LATAM mental health treatment gap / therapist shortage"
+    priority: high
+    need: >
+      Section 2 asserts "ERP therapist shortage acute in LATAM" but has
+      no source. Search for PAHO/OMS reports, Latin American mental
+      health epidemiology, or treatment gap literature.
+    queries:
+      - "Latin America mental health treatment gap epidemiology"
+      - "PAHO OCD prevalence therapy access Latin America"
+      - "therapist shortage psychotherapy LATAM developing countries"
+      - "exposure therapy availability Latin America mental health"
+
+  - id: mental-health-llm-benchmarks-2025
+    title: "Recent benchmarks (2025-2026) on mental health + LLMs"
+    priority: high
+    need: >
+      Complement TrustMH-Bench with recent 2025-2026 benchmarks on
+      mental health LLM safety, trustworthiness, hallucination,
+      effectiveness. Find the latest evaluation frameworks.
+    queries:
+      - "mental health LLM benchmark trustworthiness 2025 2026"
+      - "psychiatric AI evaluation safety framework recent"
+      - "mental health large language model evaluation 2025"
+
+  - id: cbat-ocd-neuroimaging
+    title: "CBT relapse prediction in OCD — neuroimaging studies"
+    priority: high
+    need: >
+      Feusner 2015 is cited for rsfMRI + CBT relapse, but need to know
+      if there are more recent neuroimaging studies on OCD course
+      prediction, treatment response, or relapse markers.
+    queries:
+      - "OCD CBT treatment response prediction neuroimaging fMRI"
+      - "obsessive compulsive disorder relapse biomarkers brain imaging"
+      - "OCD prognosis neuroimaging 2020-2026"
+
+  - id: digital-phenotyping-psychiatry
+    title: "Digital phenotyping / smartphone monitoring in psychiatry"
+    priority: high
+    need: >
+      Layer 4 assumes continuous narrative capture from Obsidian is
+      valid. Validate via digital phenotyping literature (EMA, passive
+      sensing, mobile mental health).
+    queries:
+      - "digital phenotyping smartphone mental health monitoring 2024 2025"
+      - "ecological momentary assessment depression anxiety OCD effectiveness"
+      - "mobile mental health app real-world validation outcomes"
+
+  - id: interpretability-clinical-ai
+    title: "Interpretability metrics for clinical AI (2024-2026)"
+    priority: high
+    need: >
+      IFS metric is grounded in Jacovi/Yeo/Lyu, but need latest (2024+)
+      work on faithfulness, explainability, trustworthiness in clinical
+      AI to ensure not missing newer frameworks.
+    queries:
+      - "interpretability faithfulness clinical decision support 2024 2025"
+      - "explainable AI healthcare recent review benchmark"
+      - "trustworthy machine learning medicine 2025"
+
+  - id: ocd-subtypes-phenotypes
+    title: "OCD subtypes/phenotypes and clinical heterogeneity"
+    priority: medium
+    need: >
+      Layer 2/3 encodes obsession types (contamination, harm, sexual,
+      religious, symmetry). Validate this taxonomy and any recent
+      updates to OCD phenotype classification (ICD-11 vs DSM-5-TR).
+    queries:
+      - "OCD obsession types phenotypes subtypes classification"
+      - "contamination fear harm intrusions OCD clinical presentation"
+      - "ICD-11 DSM-5 obsessive compulsive disorder updated criteria"
+
+  - id: erp-modern-techniques
+    title: "Modern ERP / exposure therapy techniques (2023-2026)"
+    priority: medium
+    need: >
+      Layer 2/3 recommends "ERP with graduated exposure" but need to
+      know current best practices (virtual reality ERP? cognitive
+      preparation? sequencing?). Find latest clinical guidelines update.
+    queries:
+      - "exposure response prevention OCD modern techniques 2024 2025"
+      - "virtual reality ERP obsessive compulsive disorder effectiveness"
+      - "cognitive preparation intensive ERP protocols recent"
+
+  - id: cognitive-flexibility-constructs
+    title: "Cognitive flexibility / rigidity — clinical measurement"
+    priority: medium
+    need: >
+      CFI is designed to measure "cognitive flexibility." Need recent
+      literature on how clinical psychology measures this construct
+      (Wisconsin Card Sort, Stroop, other tasks) to validate CFI design.
+    queries:
+      - "cognitive flexibility assessment clinical psychology measure"
+      - "set shifting executive function OCD Stroop Wisconsin Card"
+      - "behavioral rigidity measurement psychiatric 2023 2024"
+
+  - id: confidence-calibration-clinical
+    title: "Confidence calibration in clinical AI (recent reviews)"
+    priority: medium
+    need: >
+      Q3 targets ECE but this is rare in clinical AI literature. Search
+      for how clinical decision-support systems measure and optimize
+      confidence calibration.
+    queries:
+      - "confidence calibration clinical decision support healthcare"
+      - "uncertainty quantification medical AI recent review 2024"
+
+  - id: harm-reduction-ocd
+    title: "Harm reduction / stepped care approaches in OCD"
+    priority: medium
+    need: >
+      Layer 2 may recommend ERP, but guidelines increasingly emphasize
+      stepped care (low-intensity first). Search for harm-reduction and
+      stepped-care OCD literature.
+    queries:
+      - "stepped care OCD treatment guidelines CBT first-line"
+      - "transdiagnostic anxiety treatment protocol 2024"
+      - "low-intensity psychological interventions OCD effectiveness"

@@ -1,4 +1,5 @@
 # Nausica — Neuro-Symbolic Clinical Reasoning Architecture
+Juan Pablo botero espinosa
 
 ## What this is
 

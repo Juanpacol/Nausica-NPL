@@ -32,3 +32,6 @@ checkpoints/
 .vscode/
 .idea/
 .DS_Store
+
+# pdf-to-markdown skill venv (recreate: see .claude/skills/pdf-to-markdown/SKILL.md)
+.claude/skills/pdf-to-markdown/.venv/
