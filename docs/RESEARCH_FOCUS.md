@@ -146,11 +146,20 @@ verification against guidelines.
   that LLM-only clinical deployment is unsafe without a verification
   layer.
 - **Mental-Health-Specific Trustworthiness** [TrustMH-Bench 2025]:
-  First benchmark evaluating LLM trustworthiness specifically in
-  mental health contexts (anxiety, depression, OCD). Reveals
-  domain-specific reasoning failures — **directly motivating Nausica's
-  OCD-specific Layer 2/3 knowledge**, since generic medical LLM
-  competence does not transfer to psychiatric reasoning.
+  First *multidimensional* benchmark evaluating LLM trustworthiness
+  across eight axes in mental health contexts (anxiety, depression,
+  suicidality, general MH). Reveals **domain-specific reasoning
+  failures in psychiatric contexts** — evidence that generic medical
+  LLM competence does not transfer reliably to mental health. Notably,
+  TrustMH-Bench found that domain-specific fine-tuning (models trained
+  explicitly on mental health data) performs *worse* than general models
+  on crisis identification and escalation decisions: *"Domain-specific
+  fine-tuning does not appear to improve performance and may introduce
+  higher variance, reducing decision stability in critical scenarios"*
+  (§ G.2). This empirically motivates Nausica's approach: fine-tuning
+  alone (Layer 1's distortion classifier) is insufficient for clinical
+  safety; an independent deterministic verification layer (Layer 3) is
+  necessary to catch where domain-specific models fail.
 - **Comprehensive Trustworthiness Survey** [2025, arXiv:2502.15871]:
   Surveys the state of the art; identifies interpretability,
   hallucination, and consistency as the three unresolved pillars —
@@ -202,26 +211,58 @@ but the specific unaddressed combination detailed in Part E.
 
 ---
 
-### Part E: Why Sequential/Prompt-Only Integration Fails (2023–2026)
+### Part E: Why Hybrid LLM+KG Systems Lack Independent Verification (2023–2026)
 
-All prior hybrid approaches — MindMap [Wen et al., ACL 2024], medIKAL
-[2024], CliCARE [2024], MedRAG [2025] — share the same **sequential
-integration flaw**:
+Prior hybrid clinical LLM+KG systems — MindMap [Wen et al., ACL 2024],
+medIKAL [Jia et al., arXiv 2406.14326, 2024], CliCARE [2024], MedRAG
+[Zhao et al., WWW 2025] — employ different integration strategies, but
+all share a critical limitation: **no independent, deterministic layer
+verifies the final output against declarative facts and safety rules**.
+
+MindMap and MedRAG use a retrieve-then-generate pattern (knowledge
+retrieved *before* LLM generation):
 
 ```
-Patient input → LLM generation → KG/Rules filter → Output
-                 ↑ COMMITTED     ↑ VERIFICATION (too late)
+Patient input → KG Evidence Retrieval → LLM generation
+                                        (using context)
+                                           ↓
+                                        Output
+                                        (LLM is final arbiter)
 ```
 
-Recent evidence sharpens exactly why this fails, and why prompt-level
-fixes are insufficient:
+medIKAL, CliCARE, and post-hoc hybrid systems use generate-then-filter:
 
-1. **Reasoning committed before verification** [11, 12; MindMap,
-   medIKAL]: the LLM already generated (possibly hallucinated) output
-   before symbolic checking runs. Filtering a bad output does not fix
-   the underlying reasoning process.
+```
+Patient input → LLM generation → KG/Rules consultation → Output
+                 ↑ COMMITTED     ↑ POST-HOC CHECK (too late)
+```
 
-2. **Instruction hierarchies are not reliably enforced — even by
+In *both* patterns, the LLM makes the final decision. Recent evidence
+sharpens why this fails, and why prompt-level fixes are insufficient:
+
+1. **Even with retrieval, the LLM remains the final arbiter** [MindMap,
+   MedRAG design; medIKAL limitations]: Knowledge retrieved before
+   generation provides context, but the LLM can still ignore, misweight,
+   or misinterpret it. medIKAL explicitly notes: *"LLMs tend to overly
+   rely on the provided context... making it easy to be misled by
+   incorrect knowledge"* (Limitations). MindMap and MedRAG motivate
+   their work by showing that even *with* KG retrieval, heuristic
+   diagnosis systems produce vague or clinically indefensible outputs.
+   No independent rule-based verifier can reject an LLM output that
+   violates guideline compliance or contains internal contradictions.
+
+2. **Domain-specific fine-tuning is insufficient for clinical safety**
+   [TrustMH-Bench 2025, § G.2]: Models explicitly fine-tuned on mental
+   health data (SoulChat2, Simpsybot) perform *worse* than general-purpose
+   LLMs on crisis detection and escalation decisions. This is a direct
+   empirical finding that training-time domain adaptation — even with
+   clinically curated data — cannot guarantee that a neural model will
+   make safe, guideline-compliant decisions under all real-world
+   conditions. Nausica's Layer 1 (distortion classifier, domain-adapted)
+   must therefore be paired with Layer 3 (deterministic verification) to
+   catch failure modes that arise even after careful fine-tuning.
+
+3. **Instruction hierarchies are not reliably enforced — even by
    state-of-the-art models** [Geng et al., AAAI 2026, "Control
    Illusion"]: across six frontier LLMs (GPT-4o, Claude 3.5 Sonnet,
    Llama-70B, etc.), Primary Obedience Rate — how often a model
@@ -239,7 +280,7 @@ fixes are insufficient:
    This is precisely why Nausica's Layer 3 is a deterministic,
    independent verifier rather than a "better prompt."
 
-3. **Pre-generation structural constraints are technically viable but
+4. **Pre-generation structural constraints are technically viable but
    unapplied to clinical semantics** [Bastan et al., ACL 2023,
    "NeuroStructural Decoding"; Geng et al., EMNLP 2023,
    "Grammar-Constrained Decoding"; "Thinking Before Constraining,"
@@ -252,14 +293,14 @@ fixes are insufficient:
    *clinical semantic* structure (obsession → distortion → protocol →
    contraindication) — the gap Nausica's Layer 2 KG fills.
 
-4. **No confidence gating**: none of the above systems signal
+5. **No confidence gating**: none of the above systems signal
    uncertainty *backward* to influence how much scrutiny a
    recommendation receives. DIPOLE [8] and multi-layer classifiers
    [4, 7] show ensembling helps, but no clinical LLM+symbolic hybrid
    uses a neural confidence signal to modulate downstream
    verification effort.
 
-5. **No temporal escalation prediction *integrated with* LLM+symbolic
+6. **No temporal escalation prediction *integrated with* LLM+symbolic
    reasoning**: classical and LLM diagnostic systems alike [2, 3, 6,
    11–14] predict single-point diagnosis, not trajectory. This is not
    because escalation prediction is unsolved in psychiatry generally —
@@ -281,13 +322,13 @@ fixes are insufficient:
    precedents, and that gating Layer 3 scrutiny on it is Nausica's
    specific contribution beyond producing the score itself.
 
-6. **Not validated in real psychiatric workflows**: prototypes are
+7. **Not validated in real psychiatric workflows**: prototypes are
    tested on curated benchmarks (Pima diabetes [18–20], synthetic
    cases) or narrow specialties (neurology [13], otolaryngology [14]).
    No mental-health-specific, real-clinician-workflow validation
    exists for a neuro-symbolic LLM system.
 
-7. **"Interpretability" claims in prior LLM+KG hybrids are rarely
+8. **"Interpretability" claims in prior LLM+KG hybrids are rarely
    distinguished from plausibility** [Jacovi & Goldberg, ACL 2020;
    Lyu et al., *Computational Linguistics* 2024]: the NLP
    interpretability literature draws a sharp, foundational distinction
@@ -311,7 +352,7 @@ fixes are insufficient:
    discriminatory decisions. A post-hoc explanation is an
    *approximation* of a black box, not a guarantee about it.
 
-8. **Faithfulness is one axis of three, and modular explainer/predictor
+9. **Faithfulness is one axis of three, and modular explainer/predictor
    splits *reduce* faithfulness** [Yeo et al., NAACL Findings 2024,
    "How Interpretable are Reasoning Explanations from Prompting Large
    Language Models?"]: extending Jacovi & Goldberg's single
@@ -341,7 +382,7 @@ fixes are insufficient:
    computation. Nausica's IFS must still be validated per-layer to
    confirm this distinction holds in practice (Phase 11, Q2).
 
-9. **Hybrid neural (LLM) + deterministic evaluation is a validated
+10. **Hybrid neural (LLM) + deterministic evaluation is a validated
    pattern outside clinical NLP, but untested for clinical safety
    verification** [Anghel et al., *Informatics* 2025, "Multi-Model
    Dialectical Evaluation of LLM Reasoning Chains"]: Dialectical Agent
