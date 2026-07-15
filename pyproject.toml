@@ -24,6 +24,10 @@ dependencies = [
     "fastapi>=0.110",
     "uvicorn>=0.29",
     "python-dotenv>=1.0",
+    # Required unconditionally: /analyze/audio registers a File(...) route at
+    # import time regardless of whether faster-whisper (the "audio" extra) is
+    # installed, so FastAPI needs this to import src/api/main.py at all.
+    "python-multipart>=0.0.9",
     # Layer 2 (Phase 9): in-memory OCD knowledge graph — see "Stack decisions"
     # in docs/IMPLEMENTATION_PLAN.md §3 (networkx over Neo4j at ~40 nodes).
     "networkx>=3.0",
