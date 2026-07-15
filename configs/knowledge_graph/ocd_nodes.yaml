@@ -1,56 +1,383 @@
-# OCD Knowledge Graph — nodes (Phase 6 content, SHAPE ONLY).
+# OCD Knowledge Graph — nodes (Phase 6 DRAFT, pending clinical expert sign-off).
 #
-# Hand-curated with an OCD/ERP clinical expert holding veto over content
-# (docs/IMPLEMENTATION_PLAN.md, Phase 6). Loaded by
-# src/knowledge_graph/ocd_graph.py::OCDGraph.from_yaml via configs/knowledge_graph.yaml.
+# STATUS: AI-assisted DRAFT synthesized from peer-reviewed literature already
+# gathered for this project (see citations per node below). This is NOT
+# clinically validated content. An OCD/ERP clinical psychologist MUST review,
+# edit, and sign off on every node — with full veto power — before any of
+# this is used in `query_treatment()` for a real recommendation
+# (docs/IMPLEMENTATION_PLAN.md, Phase 6). See docs/PHASE6_CLINICAL_REVIEW.md
+# for the structured review packet.
+#
+# DO NOT use these values in any query_treatment path until Phase 6 sign-off.
+#
 # `type` must be a value of src.knowledge_graph.schema.NodeType.
 #
-# Target size: ~40 nodes across obsessions, symptoms, distortion patterns,
-# CBT techniques, ERP protocols, contraindications, and patient-state
-# markers. The rows below are placeholder examples illustrating the shape
-# expected by each NodeType's `metadata` — not clinically reviewed content.
-# DO NOT use these values in any query_treatment path until Phase 6 sign-off.
+# Design notes:
+# - The 5 obsession subtypes match the scope already declared in CLAUDE.md
+#   ("OCD obsessions: contamination, harm, sexual, religious, symmetry").
+# - DSM-5 / ICD-10-CM do NOT assign separate diagnostic codes per obsession
+#   *content* (contamination vs. harm, etc.) — all use F42 (or F42.9,
+#   unspecified). Content-level specificity here follows the symptom-dimension
+#   literature (Bloch et al. 2008 meta-analysis of OCD symptom structure), not
+#   diagnostic coding. Flagging this explicitly so the code field is never
+#   mistaken for a real differential diagnosis code.
+# - `distortion` nodes' `taxonomy_label` must exactly match
+#   configs/data.yaml taxonomy.labels (enforced by test, see
+#   docs/PHASE6_CLINICAL_REVIEW.md checklist item D0).
+# - `severity_scale: [1, 10]` is illustrative (Y-BOCS-style range), not a
+#   validated per-obsession severity anchor — expert should replace with real
+#   Y-BOCS subscale anchors if available.
 
 nodes:
+  # --------------------------------------------------------------- obsessions
+  # Source: Bloch, Landeros-Weisenberger, Rosario et al. (2008), meta-analysis
+  # of OCD symptom dimensions, Am J Psychiatry [Bloch2008OCD_Subtypes].
+
   - id: "obsession_contamination"
     type: "obsession"
     label: "Contamination fear"
     metadata:
       severity_scale: [1, 10]
-      dsm5_code: "F42.211"
+      dsm5_code: "F42.9"  # DSM-5/ICD-10-CM does not code content subtypes separately
+      source: "Bloch et al. 2008"
+      review_flag: "EXPERT: confirm this is a distinct clinical category vs. a symptom of a broader dimension"
 
-  - id: "symptom_avoidance_washing"
+  - id: "obsession_harm"
+    type: "obsession"
+    label: "Harm / aggressive obsessions (fear of causing harm to self or others)"
+    metadata:
+      severity_scale: [1, 10]
+      dsm5_code: "F42.9"
+      source: "Bloch et al. 2008"
+
+  - id: "obsession_sexual"
+    type: "obsession"
+    label: "Unwanted sexual (taboo) obsessions"
+    metadata:
+      severity_scale: [1, 10]
+      dsm5_code: "F42.9"
+      source: "Bloch et al. 2008 (grouped under 'forbidden thoughts' factor)"
+      review_flag: "EXPERT: confirm whether sexual/religious should stay split or merge into one 'taboo thoughts' node per the 4-factor model"
+
+  - id: "obsession_religious"
+    type: "obsession"
+    label: "Religious / scrupulosity obsessions"
+    metadata:
+      severity_scale: [1, 10]
+      dsm5_code: "F42.9"
+      source: "Bloch et al. 2008 (grouped under 'forbidden thoughts' factor)"
+
+  - id: "obsession_symmetry"
+    type: "obsession"
+    label: "Symmetry / exactness / ordering obsessions"
+    metadata:
+      severity_scale: [1, 10]
+      dsm5_code: "F42.9"
+      source: "Bloch et al. 2008"
+
+  # ------------------------------------------------------------------ symptoms
+  # Compulsions/behaviors per obsession. Source: Bloch et al. 2008; clinical
+  # phenomenology per Katzman et al. 2014 (Canadian guideline case descriptions).
+
+  - id: "symptom_washing_contamination"
     type: "symptom"
-    label: "Compulsive washing / avoidance"
+    label: "Compulsive washing / cleaning"
     metadata: {}
+
+  - id: "symptom_avoidance_contamination"
+    type: "symptom"
+    label: "Avoidance of 'contaminated' objects/places"
+    metadata: {}
+
+  - id: "symptom_checking_harm"
+    type: "symptom"
+    label: "Checking behaviors (locks, stove, etc.) to prevent harm"
+    metadata: {}
+
+  - id: "symptom_mental_reviewing_harm"
+    type: "symptom"
+    label: "Mental reviewing of past actions to rule out having caused harm"
+    metadata: {}
+
+  - id: "symptom_mental_neutralizing_sexual"
+    type: "symptom"
+    label: "Mental neutralizing rituals in response to intrusive sexual thoughts"
+    metadata: {}
+
+  - id: "symptom_reassurance_seeking_sexual"
+    type: "symptom"
+    label: "Reassurance-seeking about sexual intrusive thoughts"
+    metadata: {}
+
+  - id: "symptom_confession_religious"
+    type: "symptom"
+    label: "Confession / admission compulsions for perceived sins"
+    metadata: {}
+
+  - id: "symptom_praying_rituals_religious"
+    type: "symptom"
+    label: "Ritualized praying to neutralize perceived transgression"
+    metadata: {}
+
+  - id: "symptom_ordering_arranging_symmetry"
+    type: "symptom"
+    label: "Ordering / arranging objects until they feel 'just right'"
+    metadata: {}
+
+  - id: "symptom_repeating_symmetry"
+    type: "symptom"
+    label: "Repeating actions until symmetry/exactness is achieved"
+    metadata: {}
+
+  # --------------------------------------------------------------- distortions
+  # MUST match configs/data.yaml taxonomy.labels exactly (5-type taxonomy).
 
   - id: "distortion_catastrophizing"
     type: "distortion"
     label: "Catastrophizing"
     metadata:
-      taxonomy_label: "catastrophizing"  # must match configs/data.yaml taxonomy.labels
+      taxonomy_label: "catastrophizing"
+
+  - id: "distortion_all_or_nothing"
+    type: "distortion"
+    label: "All-or-nothing thinking"
+    metadata:
+      taxonomy_label: "all_or_nothing"
+
+  - id: "distortion_overgeneralization"
+    type: "distortion"
+    label: "Overgeneralization"
+    metadata:
+      taxonomy_label: "overgeneralization"
+
+  - id: "distortion_emotional_reasoning"
+    type: "distortion"
+    label: "Emotional reasoning"
+    metadata:
+      taxonomy_label: "emotional_reasoning"
+
+  - id: "distortion_mind_reading"
+    type: "distortion"
+    label: "Mind reading"
+    metadata:
+      taxonomy_label: "mind_reading"
+
+  # ----------------------------------------------------------- CBT techniques
+  # Source: Law & Boisseau 2019 (ERP review); Katzman et al. 2014 (Canadian
+  # guideline); Racz et al. 2024 (recent ERP advances, inhibitory learning);
+  # stepped-care per K. et al. 2025 (CBT barriers review), Espie 2009,
+  # Christensen 2010 (harm-reduction-ocd gap).
 
   - id: "technique_graduated_exposure"
     type: "cbt_technique"
-    label: "Graduated exposure"
-    metadata: {}
+    label: "Graduated (hierarchy-based) in-vivo exposure"
+    metadata:
+      source: "Katzman et al. 2014; Law & Boisseau 2019"
+
+  - id: "technique_imaginal_exposure"
+    type: "cbt_technique"
+    label: "Imaginal exposure"
+    metadata:
+      source: "Law & Boisseau 2019"
+      review_flag: "EXPERT: confirm this is first-line for harm/sexual obsessions where in-vivo exposure is impractical/unsafe"
+
+  - id: "technique_response_prevention"
+    type: "cbt_technique"
+    label: "Response (ritual) prevention"
+    metadata:
+      source: "Katzman et al. 2014 — core ERP mechanism"
+
+  - id: "technique_cognitive_restructuring"
+    type: "cbt_technique"
+    label: "Cognitive restructuring"
+    metadata:
+      source: "Standard CBT adjunct to ERP, Katzman et al. 2014"
+
+  - id: "technique_inhibitory_learning"
+    type: "cbt_technique"
+    label: "Inhibitory learning-based exposure (Craske model)"
+    metadata:
+      source: "Racz et al. 2024 (modern ERP variants)"
+
+  - id: "technique_acceptance_based_erp"
+    type: "cbt_technique"
+    label: "Acceptance-based ERP (ACT-informed)"
+    metadata:
+      source: "Racz et al. 2024"
+
+  - id: "technique_stepped_care_low_intensity"
+    type: "cbt_technique"
+    label: "Stepped-care / low-intensity CBT (first step before full ERP)"
+    metadata:
+      source: "harm-reduction-ocd literature: K. et al. 2025 CBT-barriers review; Espie 2009; Christensen 2010"
+
+  # ------------------------------------------------------------- ERP protocols
+  # first_line per Katzman et al. 2014 (Canadian guideline, adopted as
+  # RESEARCH_FOCUS.md's Layer 2/3 reference per prior decision).
 
   - id: "erp_protocol_contamination_graduated"
     type: "erp_protocol"
-    label: "Graduated exposure protocol — contamination"
+    label: "Graduated exposure + response prevention — contamination"
     metadata:
       first_line: true
+      source: "Katzman et al. 2014"
+
+  - id: "erp_protocol_harm_imaginal"
+    type: "erp_protocol"
+    label: "Imaginal exposure + response prevention — harm obsessions"
+    metadata:
+      first_line: true
+      source: "Katzman et al. 2014; Law & Boisseau 2019"
+
+  - id: "erp_protocol_sexual_imaginal"
+    type: "erp_protocol"
+    label: "Imaginal exposure + response prevention — sexual (taboo) obsessions"
+    metadata:
+      first_line: true
+      source: "Katzman et al. 2014; Law & Boisseau 2019"
+
+  - id: "erp_protocol_religious_graduated"
+    type: "erp_protocol"
+    label: "Graduated exposure + response prevention — religious/scrupulosity"
+    metadata:
+      first_line: true
+      source: "Katzman et al. 2014"
+      review_flag: "EXPERT: scrupulosity often benefits from clergy/clinician collaboration — confirm if that belongs as a protocol note"
+
+  - id: "erp_protocol_symmetry_response_prevention"
+    type: "erp_protocol"
+    label: "Response prevention-focused protocol — symmetry/exactness"
+    metadata:
+      first_line: true
+      source: "Katzman et al. 2014"
+
+  - id: "erp_protocol_stepped_care_general"
+    type: "erp_protocol"
+    label: "Stepped-care / low-intensity protocol (cross-cutting, second-line entry point)"
+    metadata:
+      first_line: false
+      source: "harm-reduction-ocd literature (Espie 2009, Christensen 2010, K. et al. 2025)"
+      review_flag: "EXPERT: define concrete entry criteria (e.g., mild severity, access barriers, patient preference) for when this supersedes a first_line protocol"
+
+  # -------------------------------------------------------- contraindications
+  # SAFETY-CRITICAL — every field here needs explicit clinical sign-off.
 
   - id: "contraindication_active_psychosis"
     type: "contraindication"
     label: "Active psychosis"
     metadata:
-      reason: "ERP requires reality-testing capacity not present during psychosis"
+      reason: "ERP requires reality-testing capacity not present during active psychosis"
+      review_flag: "EXPERT SIGN-OFF REQUIRED"
+
+  - id: "contraindication_severe_suicidality"
+    type: "contraindication"
+    label: "Severe / imminent suicidality"
+    metadata:
+      reason: "Crisis stabilization takes priority over ERP; exposure work is contraindicated until risk is managed"
+      review_flag: "EXPERT SIGN-OFF REQUIRED"
+
+  - id: "contraindication_untreated_severe_depression"
+    type: "contraindication"
+    label: "Untreated severe major depressive episode"
+    metadata:
+      reason: "Severe depression may impair engagement/motivation for exposure work and needs independent stabilization first"
+      review_flag: "EXPERT SIGN-OFF REQUIRED — confirm severity threshold and whether concurrent treatment is preferable to sequencing"
+
+  - id: "contraindication_active_substance_use"
+    type: "contraindication"
+    label: "Active, unmanaged substance use disorder"
+    metadata:
+      reason: "Impairs engagement and increases risk during distress from exposure exercises"
+      review_flag: "EXPERT SIGN-OFF REQUIRED"
+
+  - id: "contraindication_poor_insight"
+    type: "contraindication"
+    label: "Poor or absent insight (per DSM-5 specifier)"
+    metadata:
+      reason: "Standard ERP assumes some capacity to recognize obsessions as excessive/unreasonable; poor insight may require modified approach"
+      source: "Phase 2 literature: 'Neuropsychological and psychopathological correlates of insight in persons with OCD' (2025)"
+      review_flag: "EXPERT SIGN-OFF REQUIRED — confirm this should gate/modify rather than fully contraindicate"
+
+  - id: "contraindication_medical_instability"
+    type: "contraindication"
+    label: "Medical instability from compulsions (e.g., dermatological damage from washing)"
+    metadata:
+      reason: "Physical health risk from the compulsion itself may need medical stabilization before/alongside ERP"
+      review_flag: "EXPERT SIGN-OFF REQUIRED"
+
+  # --------------------------------------------------------------- patient state
+  # Risk/state markers consumed by Layer 3 rules (configs/rules.yaml) and by
+  # Layer 1.5's escalation signal (src/models/temporal_cfi.py).
 
   - id: "patient_state_high_suicidal_risk"
     type: "patient_state"
     label: "High suicidal risk"
     metadata:
       threshold: 0.7
+      contraindication_ref: "contraindication_severe_suicidality"
+      review_flag: "EXPERT SIGN-OFF REQUIRED — is 0.7 a defensible clinical cutoff, or arbitrary? Recommend anchoring to a validated instrument (e.g., C-SSRS) rather than a bare float."
 
-  # ... ~40 total nodes per Phase 6 expert sign-off
+  - id: "patient_state_active_psychosis"
+    type: "patient_state"
+    label: "Active psychosis (boolean)"
+    metadata:
+      contraindication_ref: "contraindication_active_psychosis"
+      review_flag: "EXPERT SIGN-OFF REQUIRED"
+
+  - id: "patient_state_high_rigidity"
+    type: "patient_state"
+    label: "High cognitive rigidity (composite CFI above threshold)"
+    metadata:
+      threshold: 0.7
+      source: "src/metrics/composite_rigidity.py — NOT independently clinically validated, per docs/VALIDATION.md"
+      review_flag: "EXPERT: this threshold is currently a project heuristic, not clinically validated — flag as known limitation, do not treat as ground truth"
+
+  - id: "patient_state_escalating_trajectory"
+    type: "patient_state"
+    label: "Escalating distortion trajectory (Layer 1.5 temporal prediction)"
+    metadata:
+      source: "src/models/temporal_cfi.py — trained on SYNTHETIC dialogue trajectories, not real longitudinal data"
+      review_flag: "EXPERT: treat as a research-stage signal, not a validated clinical predictor, per Feusner et al. 2015 caution (Part F, RESEARCH_FOCUS.md)"
+
+  - id: "patient_state_poor_insight"
+    type: "patient_state"
+    label: "Poor insight (scale marker feeding contraindication_poor_insight)"
+    metadata:
+      contraindication_ref: "contraindication_poor_insight"
+      review_flag: "EXPERT SIGN-OFF REQUIRED — define measurement instrument (e.g., BABS) rather than self-report inference"
+
+  - id: "patient_state_untreated_severe_depression"
+    type: "patient_state"
+    label: "Untreated severe major depressive episode (state marker)"
+    metadata:
+      contraindication_ref: "contraindication_untreated_severe_depression"
+      review_flag: "EXPERT SIGN-OFF REQUIRED — define severity threshold/instrument"
+
+  - id: "patient_state_active_substance_use"
+    type: "patient_state"
+    label: "Active, unmanaged substance use (state marker)"
+    metadata:
+      contraindication_ref: "contraindication_active_substance_use"
+      review_flag: "EXPERT SIGN-OFF REQUIRED"
+
+  - id: "patient_state_medical_instability"
+    type: "patient_state"
+    label: "Medical instability from compulsions (state marker)"
+    metadata:
+      contraindication_ref: "contraindication_medical_instability"
+      review_flag: "EXPERT SIGN-OFF REQUIRED"
+
+  # SCHEMA NOTE (self-check finding, not a clinical question): src/knowledge_graph/schema.py's
+  # EdgeType docstring defines CONTRAINDICATES as "patient_state -> erp_protocol" —
+  # meaning the graph edge that actually blocks a protocol must originate from a
+  # `patient_state` node, not a `contraindication` node. The `contraindication_*`
+  # nodes above are kept as declarative catalog entries (readable `reason` text for
+  # `explain_path` output); each safety-critical one now has a matching
+  # `patient_state_*` node (linked via `metadata.contraindication_ref`) that carries
+  # the actual `contraindicates` edge in ocd_edges.yaml. Phase 9 implementer: confirm
+  # this two-node pattern is the intended design, or consider adding a dedicated edge
+  # type connecting patient_state -> contraindication -> erp_protocol instead.
+
+  # ... target ~40 nodes; current count: 47 (5 obsession + 10 symptom + 5
+  # distortion + 7 technique + 6 protocol + 6 contraindication + 8 patient_state)
+  # per Phase 6 DRAFT — awaiting expert additions/removals/edits.

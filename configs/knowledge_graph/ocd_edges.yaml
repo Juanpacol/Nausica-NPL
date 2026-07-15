@@ -1,40 +1,448 @@
-# OCD Knowledge Graph — edges (Phase 6 content, SHAPE ONLY).
+# OCD Knowledge Graph — edges (Phase 6 DRAFT, pending clinical expert sign-off).
 #
-# Hand-curated alongside ocd_nodes.yaml (same expert, same sign-off gate).
-# `type` must be a value of src.knowledge_graph.schema.EdgeType; `from`/`to`
-# must reference ids defined in ocd_nodes.yaml. `strength` is the curator's
-# confidence in the relationship (see schema.Edge), never a learned weight.
+# STATUS: AI-assisted DRAFT. Same caveat as ocd_nodes.yaml — NOT clinically
+# validated. Every edge, especially `contraindicates` and `strength` values,
+# needs explicit expert review. See docs/PHASE6_CLINICAL_REVIEW.md.
 #
-# Target size: ~50 edges. The rows below are placeholder examples tracing
-# one obsession -> protocol path end to end — not clinically reviewed content.
 # DO NOT use these values in any query_treatment path until Phase 6 sign-off.
+#
+# `type` must be a value of src.knowledge_graph.schema.EdgeType; `from`/`to`
+# must reference ids defined in ocd_nodes.yaml. `strength` here is an
+# AI-estimated placeholder confidence (0-1), NOT a curator's real judgment —
+# the expert must replace every value, not just spot-check them.
 
 edges:
+  # ------------------------------------------------------- triggers (obsession -> symptom)
+
   - from: "obsession_contamination"
-    to: "symptom_avoidance_washing"
+    to: "symptom_washing_contamination"
     type: "triggers"
     strength: 0.9
 
-  - from: "symptom_avoidance_washing"
+  - from: "obsession_contamination"
+    to: "symptom_avoidance_contamination"
+    type: "triggers"
+    strength: 0.85
+
+  - from: "obsession_harm"
+    to: "symptom_checking_harm"
+    type: "triggers"
+    strength: 0.9
+
+  - from: "obsession_harm"
+    to: "symptom_mental_reviewing_harm"
+    type: "triggers"
+    strength: 0.8
+
+  - from: "obsession_sexual"
+    to: "symptom_mental_neutralizing_sexual"
+    type: "triggers"
+    strength: 0.85
+
+  - from: "obsession_sexual"
+    to: "symptom_reassurance_seeking_sexual"
+    type: "triggers"
+    strength: 0.75
+
+  - from: "obsession_religious"
+    to: "symptom_confession_religious"
+    type: "triggers"
+    strength: 0.85
+
+  - from: "obsession_religious"
+    to: "symptom_praying_rituals_religious"
+    type: "triggers"
+    strength: 0.85
+
+  - from: "obsession_symmetry"
+    to: "symptom_ordering_arranging_symmetry"
+    type: "triggers"
+    strength: 0.9
+
+  - from: "obsession_symmetry"
+    to: "symptom_repeating_symmetry"
+    type: "triggers"
+    strength: 0.85
+
+  # ------------------------------------------------ manifests_as (symptom -> distortion)
+  # DRAFT clinical-logic mapping — most in need of expert correction (least
+  # literature-grounded step: which single distortion dominates a given
+  # compulsion is a clinical judgment call, not a mined fact).
+
+  - from: "symptom_washing_contamination"
     to: "distortion_catastrophizing"
     type: "manifests_as"
-    strength: 0.7
+    strength: 0.6
+    metadata:
+      review_flag: "EXPERT: fear of catastrophic illness/death from contamination — confirm or replace"
+
+  - from: "symptom_avoidance_contamination"
+    to: "distortion_all_or_nothing"
+    type: "manifests_as"
+    strength: 0.6
+    metadata:
+      review_flag: "EXPERT: clean/contaminated binary framing — confirm or replace"
+
+  - from: "symptom_checking_harm"
+    to: "distortion_catastrophizing"
+    type: "manifests_as"
+    strength: 0.65
+    metadata:
+      review_flag: "EXPERT: fear of causing catastrophic harm — confirm or replace"
+
+  - from: "symptom_mental_reviewing_harm"
+    to: "distortion_overgeneralization"
+    type: "manifests_as"
+    strength: 0.55
+    metadata:
+      review_flag: "EXPERT: 'one intrusive thought means I'm dangerous' — confirm or replace"
+
+  - from: "symptom_mental_neutralizing_sexual"
+    to: "distortion_emotional_reasoning"
+    type: "manifests_as"
+    strength: 0.6
+    metadata:
+      review_flag: "EXPERT: disgust/anxiety taken as evidence the thought is meaningful — confirm or replace"
+
+  - from: "symptom_reassurance_seeking_sexual"
+    to: "distortion_mind_reading"
+    type: "manifests_as"
+    strength: 0.55
+    metadata:
+      review_flag: "EXPERT: assuming others will judge the intrusive thought — confirm or replace"
+
+  - from: "symptom_confession_religious"
+    to: "distortion_catastrophizing"
+    type: "manifests_as"
+    strength: 0.6
+    metadata:
+      review_flag: "EXPERT: fear of eternal/severe consequence for perceived sin — confirm or replace"
+
+  - from: "symptom_praying_rituals_religious"
+    to: "distortion_all_or_nothing"
+    type: "manifests_as"
+    strength: 0.55
+    metadata:
+      review_flag: "EXPERT: perfect piety vs. sinfulness binary — confirm or replace"
+
+  - from: "symptom_ordering_arranging_symmetry"
+    to: "distortion_emotional_reasoning"
+    type: "manifests_as"
+    strength: 0.6
+    metadata:
+      review_flag: "EXPERT: 'doesn't feel right' taken as evidence something is wrong — confirm or replace"
+
+  - from: "symptom_repeating_symmetry"
+    to: "distortion_overgeneralization"
+    type: "manifests_as"
+    strength: 0.55
+    metadata:
+      review_flag: "EXPERT: 'if not perfect, everything is ruined' — confirm or replace"
+
+  # ------------------------------------------ addressed_by (distortion -> cbt_technique)
 
   - from: "distortion_catastrophizing"
-    to: "technique_graduated_exposure"
+    to: "technique_cognitive_restructuring"
     type: "addressed_by"
-    strength: 0.85
+    strength: 0.8
+
+  - from: "distortion_catastrophizing"
+    to: "technique_inhibitory_learning"
+    type: "addressed_by"
+    strength: 0.75
+
+  - from: "distortion_all_or_nothing"
+    to: "technique_cognitive_restructuring"
+    type: "addressed_by"
+    strength: 0.8
+
+  - from: "distortion_overgeneralization"
+    to: "technique_cognitive_restructuring"
+    type: "addressed_by"
+    strength: 0.75
+
+  - from: "distortion_emotional_reasoning"
+    to: "technique_acceptance_based_erp"
+    type: "addressed_by"
+    strength: 0.7
+
+  - from: "distortion_mind_reading"
+    to: "technique_cognitive_restructuring"
+    type: "addressed_by"
+    strength: 0.75
+
+  # Core-ERP-mechanism edges (SELF-CHECK FIX): response_prevention is the
+  # behavioral mechanism that disconfirms every distortion below, and is the
+  # technique with `steps_in` edges into every protocol (see next section).
+  # Without these, no obsession -> ... -> protocol path exists at all — this
+  # was caught by a referential/reachability self-check before handoff, not
+  # by clinical review. EXPERT: please confirm this is clinically sound, not
+  # just structurally necessary — response prevention working via a
+  # different behavioral mechanism (extinction/inhibitory learning) than
+  # cognitive restructuring (belief revision) for the same distortion is a
+  # real clinical claim, not just a graph-connectivity patch.
+
+  - from: "distortion_catastrophizing"
+    to: "technique_response_prevention"
+    type: "addressed_by"
+    strength: 0.7
+    metadata:
+      review_flag: "EXPERT: confirm response prevention as primary behavioral mechanism here"
+
+  - from: "distortion_all_or_nothing"
+    to: "technique_response_prevention"
+    type: "addressed_by"
+    strength: 0.7
+    metadata:
+      review_flag: "EXPERT: confirm response prevention as primary behavioral mechanism here"
+
+  - from: "distortion_overgeneralization"
+    to: "technique_response_prevention"
+    type: "addressed_by"
+    strength: 0.7
+    metadata:
+      review_flag: "EXPERT: confirm response prevention as primary behavioral mechanism here"
+
+  - from: "distortion_emotional_reasoning"
+    to: "technique_response_prevention"
+    type: "addressed_by"
+    strength: 0.7
+    metadata:
+      review_flag: "EXPERT: confirm response prevention as primary behavioral mechanism here"
+
+  - from: "distortion_mind_reading"
+    to: "technique_response_prevention"
+    type: "addressed_by"
+    strength: 0.7
+    metadata:
+      review_flag: "EXPERT: confirm response prevention as primary behavioral mechanism here"
+
+  # --------------------------------------------- steps_in (cbt_technique -> erp_protocol)
 
   - from: "technique_graduated_exposure"
     to: "erp_protocol_contamination_graduated"
     type: "steps_in"
     strength: 1.0
 
+  - from: "technique_response_prevention"
+    to: "erp_protocol_contamination_graduated"
+    type: "steps_in"
+    strength: 1.0
+
+  - from: "technique_imaginal_exposure"
+    to: "erp_protocol_harm_imaginal"
+    type: "steps_in"
+    strength: 1.0
+
+  - from: "technique_response_prevention"
+    to: "erp_protocol_harm_imaginal"
+    type: "steps_in"
+    strength: 0.95
+
+  - from: "technique_imaginal_exposure"
+    to: "erp_protocol_sexual_imaginal"
+    type: "steps_in"
+    strength: 1.0
+
+  - from: "technique_response_prevention"
+    to: "erp_protocol_sexual_imaginal"
+    type: "steps_in"
+    strength: 0.95
+
+  - from: "technique_graduated_exposure"
+    to: "erp_protocol_religious_graduated"
+    type: "steps_in"
+    strength: 0.95
+
+  - from: "technique_response_prevention"
+    to: "erp_protocol_religious_graduated"
+    type: "steps_in"
+    strength: 0.95
+
+  - from: "technique_response_prevention"
+    to: "erp_protocol_symmetry_response_prevention"
+    type: "steps_in"
+    strength: 1.0
+
+  - from: "technique_stepped_care_low_intensity"
+    to: "erp_protocol_stepped_care_general"
+    type: "steps_in"
+    strength: 1.0
+
+  # Adjunct-technique edges (SELF-CHECK FIX): cognitive_restructuring,
+  # inhibitory_learning, and acceptance_based_erp had `addressed_by` edges
+  # from distortions but no `steps_in` edge into any protocol — orphaned
+  # nodes reachable from nowhere. Connecting them as adjunct (not primary)
+  # techniques so the graph has no dead ends. EXPERT: confirm these
+  # adjunct pairings, or remove if not clinically standard practice.
+
+  - from: "technique_cognitive_restructuring"
+    to: "erp_protocol_contamination_graduated"
+    type: "steps_in"
+    strength: 0.5
+    metadata:
+      review_flag: "EXPERT: adjunct technique, not core ERP mechanism — confirm inclusion"
+
+  - from: "technique_inhibitory_learning"
+    to: "erp_protocol_contamination_graduated"
+    type: "steps_in"
+    strength: 0.6
+    metadata:
+      review_flag: "EXPERT: confirm inhibitory-learning framing applies here specifically"
+
+  - from: "technique_acceptance_based_erp"
+    to: "erp_protocol_symmetry_response_prevention"
+    type: "steps_in"
+    strength: 0.5
+    metadata:
+      review_flag: "EXPERT: adjunct technique — confirm inclusion and whether it fits better elsewhere"
+
+  # ----------------------------------- contraindicates (patient_state -> erp_protocol)
+  # SAFETY-CRITICAL section — completeness matters more than precision here;
+  # expert should actively look for MISSING edges, not just correct existing ones.
+  #
+  # SELF-CHECK FIX: src/knowledge_graph/schema.py's EdgeType docstring defines
+  # CONTRAINDICATES as "patient_state -> erp_protocol", not
+  # "contraindication -> erp_protocol". Edges below originate from the
+  # `patient_state_*` marker nodes (each linked to its declarative
+  # `contraindication_*` catalog entry via `metadata.contraindication_ref`
+  # in ocd_nodes.yaml), matching the schema contract and the original
+  # placeholder pattern this draft replaced.
+
+  - from: "patient_state_active_psychosis"
+    to: "erp_protocol_contamination_graduated"
+    type: "contraindicates"
+    strength: 1.0
+    metadata:
+      action: "escalate"
+
+  - from: "patient_state_active_psychosis"
+    to: "erp_protocol_harm_imaginal"
+    type: "contraindicates"
+    strength: 1.0
+    metadata:
+      action: "escalate"
+
+  - from: "patient_state_active_psychosis"
+    to: "erp_protocol_sexual_imaginal"
+    type: "contraindicates"
+    strength: 1.0
+    metadata:
+      action: "escalate"
+
+  - from: "patient_state_active_psychosis"
+    to: "erp_protocol_religious_graduated"
+    type: "contraindicates"
+    strength: 1.0
+    metadata:
+      action: "escalate"
+
+  - from: "patient_state_active_psychosis"
+    to: "erp_protocol_symmetry_response_prevention"
+    type: "contraindicates"
+    strength: 1.0
+    metadata:
+      action: "escalate"
+
   - from: "patient_state_high_suicidal_risk"
     to: "erp_protocol_contamination_graduated"
     type: "contraindicates"
     strength: 1.0
     metadata:
-      action: "escalate"  # see configs/rules.yaml safety rules for enforcement
+      action: "escalate"
 
-  # ... ~50 total edges per Phase 6 expert sign-off
+  - from: "patient_state_high_suicidal_risk"
+    to: "erp_protocol_harm_imaginal"
+    type: "contraindicates"
+    strength: 1.0
+    metadata:
+      action: "escalate"
+
+  - from: "patient_state_high_suicidal_risk"
+    to: "erp_protocol_sexual_imaginal"
+    type: "contraindicates"
+    strength: 1.0
+    metadata:
+      action: "escalate"
+
+  - from: "patient_state_high_suicidal_risk"
+    to: "erp_protocol_religious_graduated"
+    type: "contraindicates"
+    strength: 1.0
+    metadata:
+      action: "escalate"
+
+  - from: "patient_state_high_suicidal_risk"
+    to: "erp_protocol_symmetry_response_prevention"
+    type: "contraindicates"
+    strength: 1.0
+    metadata:
+      action: "escalate"
+
+  - from: "patient_state_untreated_severe_depression"
+    to: "erp_protocol_harm_imaginal"
+    type: "contraindicates"
+    strength: 0.6
+    metadata:
+      action: "flag"
+      review_flag: "EXPERT: strength/scope of this edge is a placeholder guess — confirm whether this should apply to all protocols, not just harm"
+
+  - from: "patient_state_active_substance_use"
+    to: "erp_protocol_contamination_graduated"
+    type: "contraindicates"
+    strength: 0.5
+    metadata:
+      action: "flag"
+      review_flag: "EXPERT: confirm whether this should fan out to all protocols rather than just one"
+
+  - from: "patient_state_poor_insight"
+    to: "erp_protocol_symmetry_response_prevention"
+    type: "contraindicates"
+    strength: 0.4
+    metadata:
+      action: "flag"
+      review_flag: "EXPERT: poor insight may modify rather than contraindicate — confirm action type"
+
+  - from: "patient_state_medical_instability"
+    to: "erp_protocol_contamination_graduated"
+    type: "contraindicates"
+    strength: 0.7
+    metadata:
+      action: "flag"
+      review_flag: "EXPERT: dermatological damage from washing compulsions — confirm severity threshold for escalate vs. flag"
+
+  # ------------------------------------- escalates_to (patient_state -> patient_state)
+
+  - from: "patient_state_high_rigidity"
+    to: "patient_state_escalating_trajectory"
+    type: "escalates_to"
+    strength: 0.5
+    metadata:
+      review_flag: "EXPERT: this trajectory link is a project hypothesis (Layer 1.5 design), not an established clinical fact — see Feusner et al. 2015 caution"
+
+  - from: "patient_state_poor_insight"
+    to: "patient_state_escalating_trajectory"
+    type: "escalates_to"
+    strength: 0.4
+    metadata:
+      review_flag: "EXPERT: confirm or remove — weakest-evidence edge in this draft"
+
+  - from: "patient_state_escalating_trajectory"
+    to: "patient_state_high_suicidal_risk"
+    type: "escalates_to"
+    strength: 0.5
+    metadata:
+      review_flag: "EXPERT SIGN-OFF REQUIRED — this edge feeds a safety-critical rule; do not accept the placeholder strength"
+
+  - from: "patient_state_active_psychosis"
+    to: "patient_state_high_suicidal_risk"
+    type: "escalates_to"
+    strength: 0.4
+    metadata:
+      review_flag: "EXPERT: comorbidity risk pathway — confirm or remove"
+
+  # ... target ~50 edges; current count: 62 per Phase 6 DRAFT — awaiting
+  # expert additions (esp. missing contraindications) / removals / corrections.
+  # Self-checked: 0 referential-integrity errors, 0 schema-consistency errors
+  # (contraindicates all originate from patient_state nodes), all 5 obsessions
+  # reach at least one erp_protocol.
